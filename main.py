@@ -87,7 +87,7 @@ class vkmus(QWidget):
         self.playerlyt = QVBoxLayout()
         self.trackname = QLabel()
         self.trackname.setAlignment(Qt.AlignCenter)
-        self.player.setMaximumHeight(135)
+        self.player.setMaximumHeight(155)
         self.slider = QSlider(Qt.Horizontal)
         self.tracklen = QLabel()
         self.trackpos = QLabel()
@@ -103,6 +103,7 @@ class vkmus(QWidget):
         self.pos.setLayout(self.poslyt)
         # Иконки
         self.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
+        self.playbtn.setFixedSize(40,40)
         self.prevbtn.setIcon(self.style().standardIcon(self.style().SP_MediaSkipBackward))
         self.nextbtn.setIcon(self.style().standardIcon(self.style().SP_MediaSkipForward))
         # Сигналы
@@ -110,9 +111,11 @@ class vkmus(QWidget):
         self.prevbtn.clicked.connect(self.previous_track)
         self.nextbtn.clicked.connect(self.next_track)
         # Добавляем
+        self.controlslyt.addStretch()
         self.controlslyt.addWidget(self.prevbtn)
         self.controlslyt.addWidget(self.playbtn)
         self.controlslyt.addWidget(self.nextbtn)
+        self.controlslyt.addStretch()        
         self.playerwdt.setLayout(self.playerlyt)
         self.playerlyt.addWidget(self.trackname)
         self.poslyt.addWidget(self.trackpos)
@@ -156,6 +159,8 @@ class vkmus(QWidget):
             self.path, _ = QFileDialog.getSaveFileName(None, "Куда скачать?",
                                                   "%(artist)s - %(title)s.mp3" % track,
                                                   "MPEG-1/2/2.5 Layer 3 (*.mp3)")
+            if self.path == "":
+                return
             self.curdown = self.downloader.get(QNetworkRequest(QUrl(track["url"])))
             self.progress = QProgressDialog()
             self.progress.setWindowTitle("Загрузка %(artist)s - %(title)s" % track)
@@ -187,7 +192,7 @@ class vkmus(QWidget):
             self.table.customContextMenuRequested.connect(self.downmenu)
             i = 0
             for track in self.tracks:
-                self.table.setItem(i,0,QTableWidgetItem(str(i)))
+                self.table.setItem(i,0,QTableWidgetItem(str(i+1)))
                 self.table.setItem(i,1,QTableWidgetItem(track["title"]))
                 self.table.setItem(i,2,QTableWidgetItem(track["artist"]))
                 self.table.setItem(i,3,QTableWidgetItem(time_convert(int(track["duration"])*1000)))
