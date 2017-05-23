@@ -6,7 +6,7 @@ import time
 
 import requests
 from hurry.filesize import size
-from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtCore import Qt, QUrl, QSize
 from PyQt5.QtGui import QImage, QPixmap, QStandardItemModel
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -52,7 +52,7 @@ class vkmus(QWidget):
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
             self.albumpic.setPixmap(QPixmap(img))
         else:
-            self.albumpic.setPixmap(QPixmap())
+            self.albumpic.setPixmap(QPixmap(self.style().standardIcon(self.style().SP_DriveCDIcon).pixmap(QSize(135,135))))
 
     def next_track(self):
         if self.tracknum + 1 > len(self.tracks) - 1:
@@ -215,6 +215,9 @@ class vkmus(QWidget):
             ))
             trackinfo.setObjectName("trackcount")
             self.main_box.addWidget(trackinfo)
+            self.tracknum = 0
+            self.set_track()
+            self.player.pause()
 
     def switch_track(self,track, _):
         self.tracknum = track - 2
