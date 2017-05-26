@@ -3,6 +3,8 @@
 
 import sys
 import time
+import threading
+import re
 
 import requests
 from hurry.filesize import size
@@ -15,7 +17,21 @@ from PyQt5.QtWidgets import (QAction, QApplication, QProgressDialog, QFileDialog
                              QStyleFactory, QTableWidget, QTableWidgetItem,
                              QToolButton, QVBoxLayout, QWidget, QMessageBox)
 from PyQt5.QtNetwork import QNetworkReply, QNetworkRequest, QNetworkAccessManager
+import simplejson
 import audio
+cleanr = re.compile('\[.*?\]')
+
+def getCover(track, self):
+    self.albumpic.setPixmap(QPixmap(self.style().standardIcon(self.style().SP_DriveCDIcon).pixmap(QSize(135,135))))
+    covers = requests.get("https://itunes.apple.com/search", params={
+        "term":re.sub(cleanr,'', "%(artist)s %(title)s" % track),
+    }).json()
+    if covers["resultCount"] == 0:
+        pass
+    else:
+        img = QImage()
+        img.loadFromData(requests.get(covers["results"][0]["artworkUrl100"].replace("100x100", "135x135")).content)
+        self.albumpic.setPixmap(QPixmap(img))
 
 
 def time_convert(time):
@@ -52,7 +68,7 @@ class vkmus(QWidget):
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
             self.albumpic.setPixmap(QPixmap(img))
         else:
-            self.albumpic.setPixmap(QPixmap(self.style().standardIcon(self.style().SP_DriveCDIcon).pixmap(QSize(135,135))))
+            threading.Thread(target=getCover, args=(self.tracks[self.tracknum], self)).start()
 
     def next_track(self):
         if self.tracknum + 1 > len(self.tracks) - 1:
@@ -80,7 +96,10 @@ class vkmus(QWidget):
         self.playerwdt = QWidget()
         self.player.setObjectName("player")
         self.albumpic = QLabel()
+        self.albumpic.setAlignment(Qt.AlignCenter)
         self.albumpic.setMinimumWidth(135)
+        self.albumpic.setMaximumWidth(135)
+        self.albumpic.setMinimumHeight(135)
         self.albumpic.setMaximumHeight(135)
         self.player_body.addWidget(self.albumpic)
         self.player_body.addWidget(self.playerwdt)
