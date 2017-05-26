@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (QAction, QApplication, QFileDialog, QHBoxLayout,
                              QDialog, QLabel, QMenu, QMenuBar,
                              QMessageBox, QProgressDialog, QSlider,
                              QStyleFactory, QTableWidget, QTableWidgetItem,
-                             QToolButton, QVBoxLayout, QWidget, QLineEdit, QPushButton)
+                             QToolButton, QVBoxLayout, QWidget, QLineEdit, QPushButton, QCheckBox)
 
 import audio
 
@@ -54,6 +54,7 @@ class vkmus(QWidget):
         self.downloader = QNetworkAccessManager()
         self.initUI()
         self.dont_autoswitch = False
+        self.no_vasyan = False
 
     def pbutton_hnd(self):
         if self.player.state() == self.player.PausedState:
@@ -139,7 +140,7 @@ class vkmus(QWidget):
         self.controlslyt.addWidget(self.prevbtn)
         self.controlslyt.addWidget(self.playbtn)
         self.controlslyt.addWidget(self.nextbtn)
-        self.controlslyt.addStretch()        
+        self.controlslyt.addStretch()
         self.playerwdt.setLayout(self.playerlyt)
         self.playerlyt.addWidget(self.trackname)
         self.poslyt.addWidget(self.trackpos)
@@ -275,14 +276,13 @@ class vkmus(QWidget):
         if value/maxval > 0.7:
             print("Обновляем результаты")
             self.offset += 50
-            self.tracks += audio.audio_get(self.cookie, self.searchq, self.offset)
+            self.tracks += audio.audio_get(self.cookie, self.searchq, self.offset, self.no_vasyan)
             self.write_into_table()
 
     def continuesearch(self, value):
         threading.Thread(target=self.continuesearch_thread, args=[value]).start()
 
     def search(self, _):
-        print("Search")
         dialog = QDialog(self)
         dialoglyt = QVBoxLayout()
         dialog.setLayout(dialoglyt)
@@ -291,6 +291,7 @@ class vkmus(QWidget):
         dialog.ok.clicked.connect(dialog.accept)
         dialog.cancel = QPushButton("Отмена")
         dialog.cancel.clicked.connect(dialog.reject)
+        dialog.vasyan = QCheckBox("Не показывать ремиксы?")
         btns = QWidget()
         btnlyt = QHBoxLayout()
         btns.setLayout(btnlyt)
@@ -298,12 +299,14 @@ class vkmus(QWidget):
         btnlyt.addWidget(dialog.ok)
         dialog.textIn.returnPressed.connect(dialog.accept)
         dialoglyt.addWidget(dialog.textIn)
+        dialoglyt.addWidget(dialog.vasyan)
         dialoglyt.addWidget(btns)
         if dialog.exec_() == 0:
             return
         else:
+            self.no_vasyan = dialog.vasyan.isChecked()
             self.searchq = dialog.textIn.text()
-            self.tracks = audio.audio_get(self.cookie, self.searchq)
+            self.tracks = audio.audio_get(self.cookie, self.searchq, 0, self.no_vasyan)
             self.tracknum = 0
             self.player.stop()
             self.player.pause()

@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import html
 class VKError(Exception):
     pass
-def audio_get(cookie, query=None, offset=0):
+def audio_get(cookie, query=None, offset=0, no_remixes=False):
     if query:
         params = {
             "q":query,
@@ -39,5 +39,10 @@ def audio_get(cookie, query=None, offset=0):
             "number":i
         })
         i += 1
+    if no_remixes:
+        for track in tracks:
+            if "remix" in track["title"].lower() or "remix" in track["artist"].lower():
+                print("Found remix.")
+                tracks.remove(track)
     return tracks
 
