@@ -5,9 +5,18 @@ from bs4 import BeautifulSoup
 import html
 class VKError(Exception):
     pass
-def audio_get(cookie):
+def audio_get(cookie, query=None, offset=0):
+    if query:
+        params = {
+            "q":query,
+            "offset":offset,
+            "act":"search"
+        }
+    else:
+        params = {}
     r = requests.get("https://m.vk.com/audios0",
                      cookies={"remixsid":cookie},
+                     params=params
                      )
     if r.status_code != 200:
         raise VKError("Сервер вконтакте вернул код, которыйй не 200:%s" % r.status_code)

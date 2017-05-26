@@ -1,24 +1,28 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import sys
-import time
-import threading
 import re
+import sys
+import threading
+import time
 
 import requests
+import simplejson
 from hurry.filesize import size
-from PyQt5.QtCore import Qt, QUrl, QSize
+from PyQt5.QtCore import QSize, Qt, QUrl
 from PyQt5.QtGui import QImage, QPixmap, QStandardItemModel
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+from PyQt5.QtNetwork import (QNetworkAccessManager, QNetworkReply,
+                             QNetworkRequest)
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import (QAction, QApplication, QProgressDialog, QFileDialog,
-                             QHBoxLayout, QLabel, QMenu, QSlider,
+from PyQt5.QtWidgets import (QAction, QApplication, QFileDialog, QHBoxLayout,
+                             QDialog, QLabel, QMenu, QMenuBar,
+                             QMessageBox, QProgressDialog, QSlider,
                              QStyleFactory, QTableWidget, QTableWidgetItem,
-                             QToolButton, QVBoxLayout, QWidget, QMessageBox)
-from PyQt5.QtNetwork import QNetworkReply, QNetworkRequest, QNetworkAccessManager
-import simplejson
+                             QToolButton, QVBoxLayout, QWidget, QLineEdit, QPushButton)
+
 import audio
+
 cleanr = re.compile('\[.*?\]')
 
 def getCover(track, self):
@@ -46,6 +50,7 @@ class vkmus(QWidget):
     def __init__(self):
         super().__init__()
         self.tracknum = 0
+        self.offset = 0
         self.downloader = QNetworkAccessManager()
         self.initUI()
         self.dont_autoswitch = False
@@ -122,7 +127,7 @@ class vkmus(QWidget):
         self.pos.setLayout(self.poslyt)
         # Иконки
         self.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
-        self.playbtn.setFixedSize(40,40)
+        self.playbtn.setFixedSize(40, 40)
         self.prevbtn.setIcon(self.style().standardIcon(self.style().SP_MediaSkipBackward))
         self.nextbtn.setIcon(self.style().standardIcon(self.style().SP_MediaSkipForward))
         # Сигналы
@@ -189,6 +194,22 @@ class vkmus(QWidget):
             self.curdown.finished.connect(self.download_finished)
             self.progress.show()
 
+    def write_into_table(self):
+        self.table.setColumnCount(4)
+        self.table.setRowCount(len(self.tracks))
+        self.table.setHorizontalHeaderLabels(["№","Трек", "Исполнитель", "Длительность"])
+        self.table.setShowGrid(False)
+        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.downmenu)
+        i = 0
+        for track in self.tracks:
+            self.table.setItem(i,0,QTableWidgetItem(str(i+1)))
+            self.table.setItem(i,1,QTableWidgetItem(track["title"]))
+            self.table.setItem(i,2,QTableWidgetItem(track["artist"]))
+            self.table.setItem(i,3,QTableWidgetItem(time_convert(int(track["duration"])*1000)))
+            i += 1
+        self.table.selectRow(0)
+
     def new_cookie(self, cookie):
         if cookie.name() == "remixsid":
             print("Auth complete")
@@ -203,19 +224,7 @@ class vkmus(QWidget):
             self.slider.sliderReleased.connect(self.changepos)
             self.slider.valueChanged.connect(self.timechange)
             self.table = QTableWidget()
-            self.table.setColumnCount(4)
-            self.table.setRowCount(len(self.tracks))
-            self.table.setHorizontalHeaderLabels(["№","Трек", "Исполнитель", "Длительность"])
-            self.table.setShowGrid(False)
-            self.table.setContextMenuPolicy(Qt.CustomContextMenu)
-            self.table.customContextMenuRequested.connect(self.downmenu)
-            i = 0
-            for track in self.tracks:
-                self.table.setItem(i,0,QTableWidgetItem(str(i+1)))
-                self.table.setItem(i,1,QTableWidgetItem(track["title"]))
-                self.table.setItem(i,2,QTableWidgetItem(track["artist"]))
-                self.table.setItem(i,3,QTableWidgetItem(time_convert(int(track["duration"])*1000)))
-                i += 1
+            self.write_into_table()
             self.table.cellDoubleClicked.connect(self.switch_track)
             self.table.horizontalHeader().setSectionResizeMode(self.table.horizontalHeader().ResizeToContents)
             self.table.verticalHeader().setVisible(False)
@@ -250,9 +259,64 @@ class vkmus(QWidget):
     def changepos(self):
         self.player.setPosition(self.slider.value())
 
+    def about(self, _):
+        about = QMessageBox(self)
+        about.setWindowTitle("О программе")
+        about.setTextFormat(Qt.RichText)
+        about.setText("""
+        VKMus v0.1<br><br>
+        Обложки достаются с iTunes, спасибо Apple за их API<br><br>
+        Сделано на PyQt5.
+        """)
+        about.show()
+
+    def continuesearch_thread(self, value):
+        maxval = self.table.verticalScrollBar().maximum()
+        if value/maxval > 0.7:
+            print("Обновляем результаты")
+            self.offset += 50
+            self.tracks += audio.audio_get(self.cookie, self.searchq, self.offset)
+            self.write_into_table()
+
+    def continuesearch(self, value):
+        threading.Thread(target=self.continuesearch_thread, args=[value]).start()
+
+    def search(self, _):
+        print("Search")
+        dialog = QDialog(self)
+        dialoglyt = QVBoxLayout()
+        dialog.setLayout(dialoglyt)
+        dialog.textIn = QLineEdit()
+        dialog.ok = QPushButton("Искать")
+        dialog.ok.clicked.connect(dialog.accept)
+        dialog.cancel = QPushButton("Отмена")
+        dialog.cancel.clicked.connect(dialog.reject)
+        btns = QWidget()
+        btnlyt = QHBoxLayout()
+        btns.setLayout(btnlyt)
+        btnlyt.addWidget(dialog.cancel)
+        btnlyt.addWidget(dialog.ok)
+        dialog.textIn.returnPressed.connect(dialog.accept)
+        dialoglyt.addWidget(dialog.textIn)
+        dialoglyt.addWidget(btns)
+        if dialog.exec_() == 0:
+            return
+        else:
+            self.searchq = dialog.textIn.text()
+            self.tracks = audio.audio_get(self.cookie, self.searchq)
+            self.tracknum = 0
+            self.player.stop()
+            self.player.pause()
+            self.table.verticalScrollBar().valueChanged.connect(self.continuesearch)
+            self.write_into_table()
+
+
     def initUI(self):
-        self.setStyle(QStyleFactory.create("Macintosh"))
+        self.toolbar = QMenuBar()
+        self.toolbar.addAction("Поиск").triggered.connect(self.search)
+        self.toolbar.addAction("О программе").triggered.connect(self.about)
         self.main_box = QVBoxLayout()
+        self.main_box.addWidget(self.toolbar)
         self.web = QWebEngineView()
         self.web.load(QUrl("http://m.vk.com"))
         self.web.show()
