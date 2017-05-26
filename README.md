@@ -2,7 +2,7 @@
 
 ## Установка
 
-1. `pip3 install -r install --user requirments.txt`
+1. `pip3 install -r requirments.txt --user`
 
 2. Запускайте плеер с помощью `python3 main.py`
 
