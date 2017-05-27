@@ -55,6 +55,7 @@ class vkmus(QWidget):
         self.initUI()
         self.dont_autoswitch = False
         self.no_vasyan = False
+        self.menulock = False
 
     def pbutton_hnd(self):
         if self.player.state() == self.player.PausedState:
@@ -177,31 +178,41 @@ class vkmus(QWidget):
         successdialog.show()
 
     def downmenu(self, pos):
-        menu = QMenu()
-        downact = menu.addAction("Скачать")
-        if self.searchtb.text() == "Поиск":
-            removeact = menu.addAction("Удалить")
-        action = menu.exec_(self.table.mapToGlobal(pos))
-        if action == downact:
-            track = self.tracks[self.table.itemAt(pos).row()]
-            self.path, _ = QFileDialog.getSaveFileName(None, "Куда скачать?",
-                                                  "%(artist)s - %(title)s.mp3" % track,
-                                                  "MPEG-1/2/2.5 Layer 3 (*.mp3)")
-            if self.path == "":
-                return
-            self.curdown = self.downloader.get(QNetworkRequest(QUrl(track["url"])))
-            self.progress = QProgressDialog()
-            self.progress.setWindowTitle("Загрузка %(artist)s - %(title)s" % track)
-            self.progress.setLabel(QLabel("Загрузка %(artist)s - %(title)s" % track))
-            self.progress.canceled.connect(self.curdown.close)
-            self.curdown.downloadProgress.connect(self.progress_control)
-            self.curdown.finished.connect(self.download_finished)
-            self.progress.show()
-        elif action == removeact:
-            track = self.tracks[self.table.itemAt(pos).row()]
-            audio.track_mgmt("delete", self.cookie, track["mgmtid"])
-            del self.tracks[self.table.itemAt(pos).row()]
-            self.write_into_table()
+        if not self.menulock:
+            self.menulock = True
+            menu = QMenu()
+            downact = menu.addAction("Скачать")
+            if self.searchtb.text() == "Поиск":
+                removeact = menu.addAction("Удалить")
+                addact = 0
+            else:
+                removeact = 0
+                addact = menu.addAction("Добавить")
+            action = menu.exec_(self.table.mapToGlobal(pos))
+            if action == downact:
+                track = self.tracks[self.table.itemAt(pos).row()]
+                self.path, _ = QFileDialog.getSaveFileName(None, "Куда скачать?",
+                                                    "%(artist)s - %(title)s.mp3" % track,
+                                                    "MPEG-1/2/2.5 Layer 3 (*.mp3)")
+                if self.path == "":
+                    return
+                self.curdown = self.downloader.get(QNetworkRequest(QUrl(track["url"])))
+                self.progress = QProgressDialog()
+                self.progress.setWindowTitle("Загрузка %(artist)s - %(title)s" % track)
+                self.progress.setLabel(QLabel("Загрузка %(artist)s - %(title)s" % track))
+                self.progress.canceled.connect(self.curdown.close)
+                self.curdown.downloadProgress.connect(self.progress_control)
+                self.curdown.finished.connect(self.download_finished)
+                self.progress.show()
+            elif action == removeact:
+                track = self.tracks[self.table.itemAt(pos).row()]
+                audio.track_mgmt("delete", self.cookie, track["mgmtid"])
+                del self.tracks[self.table.itemAt(pos).row()]
+                self.write_into_table()
+            elif action == addact:
+                track = self.tracks[self.table.itemAt(pos).row()]
+                audio.track_mgmt("add", self.cookie, track["mgmtid"])
+            self.menulock = False
 
     def write_into_table(self):
         self.table.setColumnCount(4)
