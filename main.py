@@ -282,6 +282,16 @@ class vkmus(QWidget):
     def continuesearch(self, value):
         threading.Thread(target=self.continuesearch_thread, args=[value]).start()
 
+    def exitsearch(self, _):
+        self.searchtb.triggered.connect(self.search)
+        self.searchtb.setText("Поиск")
+        self.table.verticalScrollBar().valueChanged.disconnect(self.continuesearch)
+        self.tracks = audio.audio_get(self.cookie)
+        self.offset = 0
+        self.player.stop()
+        self.player.pause()
+        self.write_into_table()
+
     def search(self, _):
         dialog = QDialog(self)
         dialoglyt = QVBoxLayout()
@@ -312,11 +322,15 @@ class vkmus(QWidget):
             self.player.pause()
             self.table.verticalScrollBar().valueChanged.connect(self.continuesearch)
             self.write_into_table()
+            self.searchtb.setText("Выйти из поиска")
+            self.searchtb.triggered.disconnect()
+            self.searchtb.triggered.connect(self.exitsearch)
 
 
     def initUI(self):
         self.toolbar = QMenuBar()
-        self.toolbar.addAction("Поиск").triggered.connect(self.search)
+        self.searchtb = self.toolbar.addAction("Поиск")
+        self.searchtb.triggered.connect(self.search)
         self.toolbar.addAction("О программе").triggered.connect(self.about)
         self.main_box = QVBoxLayout()
         self.main_box.addWidget(self.toolbar)
