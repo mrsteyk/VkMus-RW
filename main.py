@@ -175,9 +175,12 @@ class vkmus(QWidget):
         with open(self.path, 'wb') as f:
             f.write(self.curdown.readAll())
         successdialog.show()
+
     def downmenu(self, pos):
         menu = QMenu()
         downact = menu.addAction("Скачать")
+        if self.searchtb.text() == "Поиск":
+            removeact = menu.addAction("Удалить")
         action = menu.exec_(self.table.mapToGlobal(pos))
         if action == downact:
             track = self.tracks[self.table.itemAt(pos).row()]
@@ -194,6 +197,11 @@ class vkmus(QWidget):
             self.curdown.downloadProgress.connect(self.progress_control)
             self.curdown.finished.connect(self.download_finished)
             self.progress.show()
+        elif action == removeact:
+            track = self.tracks[self.table.itemAt(pos).row()]
+            audio.track_mgmt("delete", self.cookie, track["mgmtid"])
+            del self.tracks[self.table.itemAt(pos).row()]
+            self.write_into_table()
 
     def write_into_table(self):
         self.table.setColumnCount(4)

@@ -1,8 +1,12 @@
-from pprint import pprint
+import html
+import json
 from getpass import getpass
+from pprint import pprint
+
 import requests
 from bs4 import BeautifulSoup
-import html
+
+
 class VKError(Exception):
     pass
 def audio_get(cookie, query=None, offset=0, no_remixes=False):
@@ -36,6 +40,7 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False):
             "artist":track.find(class_="ai_artist").text,
             "title":track.find(class_="ai_title").text,
             "url":track.input["value"],
+            "mgmtid":track.parent["onclick"].split("'")[1],
             "number":i
         })
         i += 1
@@ -45,4 +50,23 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False):
                 print("Found remix.")
                 tracks.remove(track)
     return tracks
+
+def track_mgmt(act,cookie, trackid):
+    hashes = requests.get("https://m.vk.com/audio",
+                     cookies={"remixsid":cookie, "remixmdevice":"1920/1080/1/!!-!!!!"}).text
+    hashes = json.loads(hashes.split("audioplayer.init(")[1].split(")")[0])
+    if act == "delete":
+        acthash = hashes["del_hash"]
+    else:
+        acthash = hashes[act+"_hash"]
+    requests.post("https://m.vk.com/audio", 
+    cookies={
+        "remixsid":cookie,
+    },
+    data={
+        "act":act,
+        "_ajax":"1",
+        "hash":acthash,
+        "audio":trackid
+    })
 
