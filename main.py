@@ -283,6 +283,7 @@ class vkmus(QWidget):
         threading.Thread(target=self.continuesearch_thread, args=[value]).start()
 
     def exitsearch(self, _):
+        self.searchtb.triggered.disconnect(self.exitsearch)
         self.searchtb.triggered.connect(self.search)
         self.searchtb.setText("Поиск")
         self.table.verticalScrollBar().valueChanged.disconnect(self.continuesearch)
