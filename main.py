@@ -66,6 +66,7 @@ class vkmus(QWidget):
     def set_track(self):
         self.player.setMedia(QMediaContent(QUrl(self.tracks[self.tracknum]["url"])))
         self.trackname.setText("%(artist)s - %(title)s" % self.tracks[self.tracknum])
+        self.setWindowTitle("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         self.table.setCurrentRow(self.tracknum)
         self.player.play()
         self.player.setPosition(900)
