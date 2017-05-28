@@ -68,6 +68,7 @@ class vkmus(QWidget):
         self.trackname.setText("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         self.table.setCurrentRow(self.tracknum)
         self.player.play()
+        self.player.setPosition(900)
         self.slider.setMaximum(int(self.tracks[self.tracknum]["duration"])*1000)
         self.tracklen.setText(time_convert(self.slider.maximum()))
         if self.tracks[self.tracknum]["cover"]:
