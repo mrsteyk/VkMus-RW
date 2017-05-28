@@ -9,20 +9,10 @@ cleanr2 = re.compile('\(.*?\)')
 def clean_trackname(track):
     return re.sub(cleanr2, '', re.sub(cleanr,'', "%(artist)s %(title)s" % track).replace("OST",""))
 
-def getCover(track, self):
-    self.albumpic.setPixmap(QPixmap(self.style().standardIcon(self.style().SP_DriveCDIcon).pixmap(QSize(135,135))))
-    covers = requests.get("https://itunes.apple.com/search", params={
-        "term":clean_trackname(track),
-    }).json()
-    if covers["resultCount"] == 0:
-        pass
-    else:
-        img = QImage()
-        img.loadFromData(requests.get(covers["results"][0]["artworkUrl100"].replace("100x100", "135x135")).content)
-        if self.cover_q.get_nowait == track:
-            self.albumpic.setPixmap(QPixmap(img))
-
 def setCover(window, item, track):
+    """
+    Ставит обложки в листе
+    """
     item.setIcon(window.style().standardIcon(window.style().SP_DriveCDIcon))
     if track["cover"]:
         img = QImage()
@@ -33,10 +23,10 @@ def setCover(window, item, track):
             "term":clean_trackname(track),
         }).json()
         if covers["resultCount"] == 0:
-            pass
+            pass;
         else:
             img = QImage()
-            img.loadFromData(requests.get(covers["results"][0]["artworkUrl100"].replace("100x100", "45x45")).content)
+            img.loadFromData(requests.get(covers["results"][0]["artworkUrl100"].replace("100x100", "135x135")).content)
             item.setIcon(QIcon(QPixmap(img)))
 
 def time_convert(time):
@@ -51,7 +41,6 @@ class vkmus(QWidget):
     def __init__(self):
         super().__init__()
         self.tracknum = 0
-        self.cover_q = queue.Queue()
         self.offset = 0
         self.downloader = QNetworkAccessManager()
         self.initUI()
@@ -85,12 +74,7 @@ class vkmus(QWidget):
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
             self.albumpic.setPixmap(QPixmap(img))
         else:
-            try:
-                self.cover_q.put_nowait(self.tracks[self.tracknum])
-            except queue.Full:
-                return
-            else:
-                threading.Thread(target=getCover, args=(self.tracks[self.tracknum], self)).start()
+            self.albumpic.setPixmap(self.table.currentItem().icon().pixmap(QSize(135,135)))
 
     def next_track(self):
         if self.tracknum + 1 > len(self.tracks) - 1:
