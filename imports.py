@@ -2,6 +2,7 @@ import re
 import sys
 import threading
 import time
+import queue
 
 import requests
 import simplejson

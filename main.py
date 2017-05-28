@@ -15,7 +15,8 @@ def getCover(track, self):
     else:
         img = QImage()
         img.loadFromData(requests.get(covers["results"][0]["artworkUrl100"].replace("100x100", "135x135")).content)
-        self.albumpic.setPixmap(QPixmap(img))
+        if self.cover_q.get_nowait == track:
+            self.albumpic.setPixmap(QPixmap(img))
 
 def setCover(window, item, track):
     item.setIcon(window.style().standardIcon(window.style().SP_DriveCDIcon))
@@ -46,6 +47,7 @@ class vkmus(QWidget):
     def __init__(self):
         super().__init__()
         self.tracknum = 0
+        self.cover_q = queue.Queue()
         self.offset = 0
         self.downloader = QNetworkAccessManager()
         self.initUI()
@@ -79,8 +81,12 @@ class vkmus(QWidget):
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
             self.albumpic.setPixmap(QPixmap(img))
         else:
-            print("No cover found for track number", self.tracknum)
-            threading.Thread(target=getCover, args=(self.tracks[self.tracknum], self)).start()
+            try:
+                self.cover_q.put_nowait(self.tracks[self.tracknum])
+            except queue.Full:
+                return
+            else:
+                threading.Thread(target=getCover, args=(self.tracks[self.tracknum], self)).start()
 
     def next_track(self):
         if self.tracknum + 1 > len(self.tracks) - 1:
