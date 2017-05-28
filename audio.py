@@ -52,7 +52,7 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False, uid="0"):
             if page.text == "»":
                 last_offset = int(page["href"].split("offset=")[-1])
         offset = 50
-        while offset != last_offset:
+        while offset != (last_offset + 50):
             params["offset"] = offset
             params["id"] = uid
             r = requests.get("https://m.vk.com/audio?id=0&offset=350",
