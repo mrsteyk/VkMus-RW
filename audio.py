@@ -9,25 +9,9 @@ from bs4 import BeautifulSoup
 
 class VKError(Exception):
     pass
-def audio_get(cookie, query=None, offset=0, no_remixes=False):
-    if query:
-        params = {
-            "q":query,
-            "offset":offset,
-            "act":"search"
-        }
-    else:
-        params = {}
-    r = requests.get("https://m.vk.com/audios0",
-                     cookies={"remixsid":cookie},
-                     params=params
-                     )
-    if r.status_code != 200:
-        raise VKError("Сервер вконтакте вернул код, которыйй не 200:%s" % r.status_code)
-    soup = BeautifulSoup(r.text, 'html5lib')
+
+def _parse_tracks(tracks_html):
     tracks = []
-    tracks_html = soup.find_all(class_="ai_info")
-    i = 1
     for track in tracks_html:
         cover = track.find(class_="ai_play")["style"].split("background-image:url(")
         if len(cover) > 1:
@@ -41,9 +25,44 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False):
             "title":track.find(class_="ai_title").text,
             "url":track.input["value"],
             "mgmtid":track.parent["onclick"].split("'")[1],
-            "number":i
         })
-        i += 1
+    return tracks
+
+def audio_get(cookie, query=None, offset=0, no_remixes=False, uid="0"):
+    if query:
+        params = {
+            "q":query,
+            "offset":offset,
+            "act":"search"
+        }
+    else:
+        params = {}
+    r = requests.get("https://m.vk.com/audios" + uid,
+                     cookies={"remixsid":cookie},
+                     params=params
+                     )
+    if r.status_code != 200:
+        raise VKError("Сервер вконтакте вернул код, которыйй не 200:%s" % r.status_code)
+    soup = BeautifulSoup(r.text, 'html5lib')
+    tracks = []
+    pages = soup.find(class_="pagination")
+    if pages:
+        tracks += _parse_tracks(soup.find_all(class_="ai_info"))
+        for page in pages.find_all(class_="pg_link"):
+            if page.text == "»":
+                last_offset = int(page["href"].split("offset=")[-1])
+        offset = 50
+        while offset != last_offset:
+            params["offset"] = offset
+            params["id"] = uid
+            r = requests.get("https://m.vk.com/audio?id=0&offset=350",
+                    cookies={"remixsid":cookie},
+                    params=params
+            )
+            tracks += _parse_tracks(BeautifulSoup(r.text, 'html5lib').find_all(class_="ai_info"))
+            offset += 50
+    else:
+        tracks += _parse_tracks(soup.find_all(class_="ai_info"))
     if no_remixes:
         for track in tracks:
             if "remix" in track["title"].lower() or "remix" in track["artist"].lower():
