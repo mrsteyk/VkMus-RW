@@ -4,7 +4,6 @@
 VKMus
 """
 from imports import *
-
 cleanr = re.compile('\[.*?\]')
 cleanr2 = re.compile('\(.*?\)')
 
@@ -350,7 +349,7 @@ class vkmus(QWidget):
 
 
     def initUI(self):
-        self.setWindowIcon(QIcon("icon.png"))
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "icon.png")))
         self.toolbar = QMenuBar()
         self.searchtb = self.toolbar.addAction("Поиск")
         self.searchtb.triggered.connect(self.search)
