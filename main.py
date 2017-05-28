@@ -347,6 +347,7 @@ class vkmus(QWidget):
 
 
     def initUI(self):
+        self.setWindowIcon(QIcon("icon.png"))
         self.toolbar = QMenuBar()
         self.searchtb = self.toolbar.addAction("Поиск")
         self.searchtb.triggered.connect(self.search)
