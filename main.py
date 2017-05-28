@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
+"""
+VKMus
+"""
 from imports import *
 
 cleanr = re.compile('\[.*?\]')
@@ -285,7 +287,8 @@ class vkmus(QWidget):
         about.setText("""
         VKMus v0.1<br><br>
         Обложки достаются с iTunes, спасибо Apple за их API<br><br>
-        Сделано на PyQt5.
+        Сделано на PyQt5.<br><br>
+        Иконка - эмодзи арбуза из Firefox OS
         """)
         about.show()
 
