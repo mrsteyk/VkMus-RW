@@ -1,27 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import re
-import sys
-import threading
-import time
-
-import requests
-import simplejson
-from hurry.filesize import size
-from PyQt5.QtCore import QSize, Qt, QUrl
-from PyQt5.QtGui import QImage, QPixmap, QStandardItemModel
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
-from PyQt5.QtNetwork import (QNetworkAccessManager, QNetworkReply,
-                             QNetworkRequest)
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import (QAction, QApplication, QFileDialog, QHBoxLayout,
-                             QDialog, QLabel, QMenu, QMenuBar,
-                             QMessageBox, QProgressDialog, QSlider,
-                             QStyleFactory, QTableWidget, QTableWidgetItem,
-                             QToolButton, QVBoxLayout, QWidget, QLineEdit, QPushButton, QCheckBox)
-
-import audio
+from imports import *
 
 cleanr = re.compile('\[.*?\]')
 
@@ -37,6 +17,22 @@ def getCover(track, self):
         img.loadFromData(requests.get(covers["results"][0]["artworkUrl100"].replace("100x100", "135x135")).content)
         self.albumpic.setPixmap(QPixmap(img))
 
+def setCover(window, item, track):
+    item.setIcon(window.style().standardIcon(window.style().SP_DriveCDIcon))
+    if track["cover"]:
+        img = QImage()
+        img.loadFromData(requests.get(track["cover"]).content)
+        item.setIcon(QIcon(QPixmap(img)))
+    else:
+        covers = requests.get("https://itunes.apple.com/search", params={
+            "term":re.sub(cleanr,'', "%(artist)s %(title)s" % track),
+        }).json()
+        if covers["resultCount"] == 0:
+            pass
+        else:
+            img = QImage()
+            img.loadFromData(requests.get(covers["results"][0]["artworkUrl100"].replace("100x100", "45x45")).content)
+            item.setIcon(QIcon(QPixmap(img)))
 
 def time_convert(time):
     seconds = time / 1000
@@ -56,6 +52,7 @@ class vkmus(QWidget):
         self.dont_autoswitch = False
         self.no_vasyan = False
         self.menulock = False
+        self.settings = QSettings("OctoNezd", "VKMus")
 
     def pbutton_hnd(self):
         if self.player.state() == self.player.PausedState:
@@ -63,10 +60,17 @@ class vkmus(QWidget):
         else:
             self.player.pause()
 
+    def settingswin(self):
+        return
+        #self.settingsdial = QDialog(self)
+        #self.settingsdial.lyt = QVBoxLayout()
+        #self.settingsdial.hotkeytable = QTableWidget()
+        #self.settingsdial.lyt.addWidget(self.settingsdial.hotkeytable)
+
     def set_track(self):
         self.player.setMedia(QMediaContent(QUrl(self.tracks[self.tracknum]["url"])))
         self.trackname.setText("%(artist)s - %(title)s" % self.tracks[self.tracknum])
-        self.table.selectRow(self.tracknum)
+        self.table.setCurrentRow(self.tracknum)
         self.player.play()
         self.slider.setMaximum(int(self.tracks[self.tracknum]["duration"])*1000)
         self.tracklen.setText(time_convert(self.slider.maximum()))
@@ -75,6 +79,7 @@ class vkmus(QWidget):
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
             self.albumpic.setPixmap(QPixmap(img))
         else:
+            print("No cover found for track number", self.tracknum)
             threading.Thread(target=getCover, args=(self.tracks[self.tracknum], self)).start()
 
     def next_track(self):
@@ -215,20 +220,19 @@ class vkmus(QWidget):
             self.menulock = False
 
     def write_into_table(self):
-        self.table.setColumnCount(4)
-        self.table.setRowCount(len(self.tracks))
-        self.table.setHorizontalHeaderLabels(["№","Трек", "Исполнитель", "Длительность"])
-        self.table.setShowGrid(False)
+        self.table.setIconSize(QSize(45,45))
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.downmenu)
         i = 0
         for track in self.tracks:
-            self.table.setItem(i,0,QTableWidgetItem(str(i+1)))
-            self.table.setItem(i,1,QTableWidgetItem(track["title"]))
-            self.table.setItem(i,2,QTableWidgetItem(track["artist"]))
-            self.table.setItem(i,3,QTableWidgetItem(time_convert(int(track["duration"])*1000)))
-            i += 1
-        self.table.selectRow(0)
+            item = QListWidgetItem("%(artist)s\n%(title)s" % track)
+            self.table.addItem(item)
+            threading.Thread(target=setCover, args=(self, item, track)).start()
+        self.table.setCurrentRow(0)
+
+    def visual(self, buf):
+        return
+        print(buf.data())
 
     def new_cookie(self, cookie):
         if cookie.name() == "remixsid":
@@ -243,11 +247,9 @@ class vkmus(QWidget):
             self.player.stateChanged.connect(self.state_handle)
             self.slider.sliderReleased.connect(self.changepos)
             self.slider.valueChanged.connect(self.timechange)
-            self.table = QTableWidget()
+            self.table = QListWidget()
             self.write_into_table()
-            self.table.cellDoubleClicked.connect(self.switch_track)
-            self.table.horizontalHeader().setSectionResizeMode(self.table.horizontalHeader().ResizeToContents)
-            self.table.verticalHeader().setVisible(False)
+            self.table.itemDoubleClicked.connect(self.switch_track)
             self.table.setEditTriggers(self.table.NoEditTriggers)
             self.table.setSelectionBehavior(self.table.SelectRows)
             self.table.setSelectionMode(self.table.SingleSelection)
@@ -271,9 +273,12 @@ class vkmus(QWidget):
             self.tracknum = 0
             self.set_track()
             self.player.pause()
+            self.player.probe = QAudioProbe()
+            self.player.probe.setSource(self.player)
+            self.player.probe.audioBufferProbed.connect(self.visual)
 
-    def switch_track(self,track, _):
-        self.tracknum = track - 2
+    def switch_track(self,track):
+        self.tracknum = self.table.row(track) - 2
         self.set_track()
 
     def changepos(self):
