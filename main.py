@@ -4,11 +4,15 @@
 from imports import *
 
 cleanr = re.compile('\[.*?\]')
+cleanr2 = re.compile('\(.*?\)')
+
+def clean_trackname(track):
+    return re.sub(cleanr2, '', re.sub(cleanr,'', "%(artist)s %(title)s" % track).replace("OST",""))
 
 def getCover(track, self):
     self.albumpic.setPixmap(QPixmap(self.style().standardIcon(self.style().SP_DriveCDIcon).pixmap(QSize(135,135))))
     covers = requests.get("https://itunes.apple.com/search", params={
-        "term":re.sub(cleanr,'', "%(artist)s %(title)s" % track),
+        "term":clean_trackname(track),
     }).json()
     if covers["resultCount"] == 0:
         pass
@@ -26,7 +30,7 @@ def setCover(window, item, track):
         item.setIcon(QIcon(QPixmap(img)))
     else:
         covers = requests.get("https://itunes.apple.com/search", params={
-            "term":re.sub(cleanr,'', "%(artist)s %(title)s" % track),
+            "term":clean_trackname(track),
         }).json()
         if covers["resultCount"] == 0:
             pass
