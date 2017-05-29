@@ -284,12 +284,15 @@ class vkmus(QWidget):
     def about(self, _):
         about = QMessageBox(self)
         about.setWindowTitle("О программе")
+        about.setIconPixmap(self.app_icon.pixmap(QSize(150, 150)))
         about.setTextFormat(Qt.RichText)
         about.setText("""
-        VKMus v0.1<br><br>
-        Обложки достаются с iTunes, спасибо Apple за их API<br><br>
-        Сделано на PyQt5.<br><br>
-        Иконка - эмодзи арбуза из Firefox OS
+        <p align="center">VKMus v0.1</p>
+        <ul>
+        <li>Обложки достаются с iTunes, спасибо Apple за их API</li>
+        <li>Сделано на PyQt5.</li>
+        <li>Иконка - эмодзи арбуза из Firefox OS</li>
+        </ul>
         """)
         about.show()
 
@@ -351,7 +354,8 @@ class vkmus(QWidget):
 
 
     def initUI(self):
-        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "icon.png")))
+        self.app_icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "icon.png"))
+        self.setWindowIcon(self.app_icon)
         self.toolbar = QMenuBar()
         self.searchtb = self.toolbar.addAction("Поиск")
         self.searchtb.triggered.connect(self.search)
