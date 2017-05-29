@@ -314,7 +314,7 @@ class vkmus(QWidget):
         about.setIconPixmap(self.app_icon.pixmap(QSize(150, 150)))
         about.setTextFormat(Qt.RichText)
         about.setText("""
-        <p align="center">VKMus v0.1</p>
+        <p align="center">VKMus v1.0</p>
         <ul>
         <li>Обложки достаются с iTunes, спасибо Apple за их API</li>
         <li>Сделано на PyQt5.</li>
