@@ -24,7 +24,7 @@ def setCover(window, item, track):
             "term":clean_trackname(track),
         }).json()
         if covers["resultCount"] == 0:
-            pass;
+            pass
         else:
             img = QImage()
             img.loadFromData(requests.get(covers["results"][0]["artworkUrl100"].replace("100x100", "135x135")).content)
@@ -36,7 +36,6 @@ def time_convert(time):
     h, m = divmod(m, 60)
     return "%d:%02d:%02d" % (h, m, s)
 
-
 class vkmus(QWidget):
 
     def __init__(self):
@@ -44,11 +43,15 @@ class vkmus(QWidget):
         self.tracknum = 0
         self.offset = 0
         self.downloader = QNetworkAccessManager()
-        self.initUI()
         self.dont_autoswitch = False
         self.no_vasyan = False
         self.menulock = False
         self.settings = QSettings("OctoNezd", "VKMus")
+        self.initUI()
+        shortcut_play.activated.connect(self.pbutton_hnd)
+        shortcut_next.activated.connect(self.next_track)
+        shortcut_prev.activated.connect(self.previous_track)
+
 
     def pbutton_hnd(self):
         if self.player.state() == self.player.PausedState:
@@ -56,12 +59,37 @@ class vkmus(QWidget):
         else:
             self.player.pause()
 
-    def settingswin(self):
+
+    def setHotkeys(self):
         return
-        #self.settingsdial = QDialog(self)
-        #self.settingsdial.lyt = QVBoxLayout()
-        #self.settingsdial.hotkeytable = QTableWidget()
-        #self.settingsdial.lyt.addWidget(self.settingsdial.hotkeytable)
+
+    def settingswin(self):
+        self.settingsdial = QDialog(self)
+        self.settingsdial.setWindowTitle("Настройки")
+        self.settingsdial.lyt = QVBoxLayout()
+        self.settingsdial.keyseq_play = QKeySequenceEdit(self.settings.value("h_play", QKeySequence(Qt.Key_MediaPlay)))
+        self.settingsdial.keyseq_next = QKeySequenceEdit(self.settings.value("h_next", QKeySequence(Qt.Key_MediaNext)))
+        self.settingsdial.keyseq_prev = QKeySequenceEdit(self.settings.value("h_prev", QKeySequence(Qt.Key_MediaPrevious)))
+        self.settingsdial.setLayout(self.settingsdial.lyt)
+        self.settingsdial.lyt.addWidget(QLabel("Приостановить/Запустить"))
+        self.settingsdial.lyt.addWidget(self.settingsdial.keyseq_play)
+        self.settingsdial.lyt.addWidget(QLabel("Следующий трек"))
+        self.settingsdial.lyt.addWidget(self.settingsdial.keyseq_next)
+        self.settingsdial.lyt.addWidget(QLabel("Предыдущий трек"))
+        self.settingsdial.lyt.addWidget(self.settingsdial.keyseq_prev)
+        exbtn = QPushButton("Сохранить")
+        self.settingsdial.setFocusPolicy(Qt.NoFocus)
+        self.settingsdial.setFocus(Qt.NoFocusReason)
+        self.settingsdial.lyt.addWidget(exbtn)
+        exbtn.clicked.connect(self.settingsdial.accept)
+        if self.settingsdial.exec_() != 0:
+            print("Setting new hotkeys")
+            self.settings.setValue("h_play", QKeySequence(self.settingsdial.keyseq_play.keySequence()[0]))
+            shortcut_play.setShortcut(settings.value("h_play", QKeySequence(Qt.Key_MediaPlay)))    
+            self.settings.setValue("h_next", QKeySequence(self.settingsdial.keyseq_next.keySequence()[0]))
+            shortcut_next.setShortcut(settings.value("h_next", QKeySequence(Qt.Key_MediaPlay)))    
+            self.settings.setValue("h_prev", QKeySequence(self.settingsdial.keyseq_prev.keySequence()[0]))
+            shortcut_prev.setShortcut(settings.value("h_prev", QKeySequence(Qt.Key_MediaPlay)))    
 
     def set_track(self):
         self.player.setMedia(QMediaContent(QUrl(self.tracks[self.tracknum]["url"])))
@@ -77,7 +105,7 @@ class vkmus(QWidget):
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
             self.albumpic.setPixmap(QPixmap(img))
         else:
-            self.albumpic.setPixmap(self.table.currentItem().icon().pixmap(QSize(135,135)))
+            self.albumpic.setPixmap(self.table.currentItem().icon().pixmap(QSize(135, 135)))
 
     def next_track(self):
         if self.tracknum + 1 > len(self.tracks) - 1:
@@ -220,7 +248,6 @@ class vkmus(QWidget):
         self.table.setIconSize(QSize(45,45))
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.downmenu)
-        i = 0
         for track in self.tracks:
             item = QListWidgetItem("%(artist)s\n%(title)s" % track)
             self.table.addItem(item)
@@ -358,6 +385,7 @@ class vkmus(QWidget):
         self.setWindowIcon(self.app_icon)
         self.toolbar = QMenuBar()
         self.searchtb = self.toolbar.addAction("Поиск")
+        self.toolbar.addAction("Настройки").triggered.connect(self.settingswin)
         self.searchtb.triggered.connect(self.search)
         self.toolbar.addAction("О программе").triggered.connect(self.about)
         self.main_box = QVBoxLayout()
@@ -386,10 +414,18 @@ class vkmus(QWidget):
         }
         """)
         self.show()
-
+        self.setHotkeys()
 
 if __name__ == '__main__':
-
     app = QApplication(sys.argv)
+    print("Setting hotkeys")
+    settings = QSettings("OctoNezd", "VKMus")    
+    shortcut_play = QxtGlobalShortcut()
+    shortcut_play.setShortcut(settings.value("h_play", QKeySequence(Qt.Key_MediaPlay)))
+    shortcut_next = QxtGlobalShortcut()
+    shortcut_next.setShortcut(settings.value("h_next", QKeySequence(Qt.Key_MediaPlay)))
+    shortcut_prev = QxtGlobalShortcut()
+    shortcut_prev.setShortcut(settings.value("h_prev", QKeySequence(Qt.Key_MediaPlay)))
     ex = vkmus()
-    sys.exit(app.exec_())
+    res = app.exec_()
+    sys.exit(res)

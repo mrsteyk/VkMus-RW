@@ -2,5 +2,5 @@ requests
 pyqt5
 bs4
 html5lib
-PyGlobalShortcut
 hurry.filesize
+PyGlobalShortcut
