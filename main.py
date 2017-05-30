@@ -126,13 +126,20 @@ class vkmus(QWidget):
         self.set_track()
         self.dont_autoswitch = False
 
+    def vol_ctl(self, vol):
+        self.player.setVolume(vol)
+        if vol == 0:
+            self.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolumeMuted))
+        else:
+            self.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolume))
+
     def create_player_ui(self):
         # Виджет плеера
-        self.player = QWidget()
+        player = QWidget()
         self.player_body = QHBoxLayout()
-        self.player.setLayout(self.player_body)
+        player.setLayout(self.player_body)
         self.playerwdt = QWidget()
-        self.player.setObjectName("player")
+        player.setObjectName("player")
         self.albumpic = QLabel()
         self.albumpic.setAlignment(Qt.AlignCenter)
         self.albumpic.setMinimumWidth(135)
@@ -144,7 +151,7 @@ class vkmus(QWidget):
         self.playerlyt = QVBoxLayout()
         self.trackname = QLabel()
         self.trackname.setAlignment(Qt.AlignCenter)
-        self.player.setMaximumHeight(155)
+        player.setMaximumHeight(155)
         self.slider = QSlider(Qt.Horizontal)
         self.tracklen = QLabel()
         self.trackpos = QLabel()
@@ -154,16 +161,24 @@ class vkmus(QWidget):
         self.playbtn = QToolButton()
         self.prevbtn = QToolButton()
         self.nextbtn = QToolButton()
+        self.volumeicon = QToolButton()
+        self.volume = QSlider(Qt.Horizontal)
+        self.player.setVolume(int(self.settings.value("volume", 100)))
+        self.volume.setValue(self.player.volume())
+        self.volume.valueChanged.connect(self.vol_ctl)
         # Позиция
         self.pos = QWidget()
         self.poslyt = QHBoxLayout()
         self.pos.setLayout(self.poslyt)
         # Иконки
         self.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
+        self.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolume))
         self.playbtn.setFixedSize(40, 40)
         self.prevbtn.setIcon(self.style().standardIcon(self.style().SP_MediaSkipBackward))
         self.nextbtn.setIcon(self.style().standardIcon(self.style().SP_MediaSkipForward))
         # Сигналы
+        self.volumeicon.clicked.connect(lambda: self.player.setMuted(not self.player.isMuted()))
+        self.player.mutedChanged.connect(lambda muted:self.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolumeMuted) if muted else self.style().standardIcon(self.style().SP_MediaVolume)))
         self.playbtn.clicked.connect(self.pbutton_hnd)
         self.prevbtn.clicked.connect(self.previous_track)
         self.nextbtn.clicked.connect(self.next_track)
@@ -173,7 +188,10 @@ class vkmus(QWidget):
         self.controlslyt.addWidget(self.playbtn)
         self.controlslyt.addWidget(self.nextbtn)
         self.controlslyt.addStretch()
+        self.controlslyt.addWidget(self.volumeicon)
+        self.controlslyt.addWidget(self.volume)
         self.playerwdt.setLayout(self.playerlyt)
+        self.controlslyt.insertSpacing(0, self.volume.sizeHint().width() + self.volumeicon.sizeHint().width())
         self.playerlyt.addWidget(self.trackname)
         self.poslyt.addWidget(self.trackpos)
         self.poslyt.addWidget(self.slider)
@@ -181,7 +199,7 @@ class vkmus(QWidget):
         self.playerlyt.addWidget(self.pos)
         self.playerlyt.addWidget(self.controls)
         self.controls.setLayout(self.controlslyt)
-        self.main_box.addWidget(self.player)
+        self.main_box.addWidget(player)
 
     def state_handle(self):
         if self.player.state() == self.player.StoppedState:
@@ -263,11 +281,11 @@ class vkmus(QWidget):
         if cookie.name() == "remixsid":
             print("Auth complete")
             self.cookie = str(cookie.value(), 'utf-8')
-            self.create_player_ui()
             self.tracks = audio.audio_get(self.cookie)
             self.web.close()
             self.log_label.close()
             self.player = QMediaPlayer()
+            self.create_player_ui()
             self.player.positionChanged.connect(self.slider.setValue)
             self.player.stateChanged.connect(self.state_handle)
             self.slider.sliderReleased.connect(self.changepos)
