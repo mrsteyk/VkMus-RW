@@ -40,13 +40,13 @@ class vkmus(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.tracknum = 0
         self.offset = 0
         self.downloader = QNetworkAccessManager()
         self.dont_autoswitch = False
         self.no_vasyan = False
         self.menulock = False
         self.settings = QSettings("OctoNezd", "VKMus")
+        self.tracknum = int(self.settings.value("last_track", 0))
         self.initUI()
         shortcut_play.activated.connect(self.pbutton_hnd)
         shortcut_next.activated.connect(self.next_track)
@@ -92,6 +92,7 @@ class vkmus(QWidget):
             shortcut_prev.setShortcut(settings.value("h_prev", QKeySequence(Qt.Key_MediaPlay)))    
 
     def set_track(self):
+        self.settings.setValue("last_track", self.tracknum)
         self.player.setMedia(QMediaContent(QUrl(self.tracks[self.tracknum]["url"])))
         self.trackname.setText("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         self.setWindowTitle("%(artist)s - %(title)s" % self.tracks[self.tracknum])
@@ -294,7 +295,6 @@ class vkmus(QWidget):
             ))
             trackinfo.setObjectName("trackcount")
             self.main_box.addWidget(trackinfo)
-            self.tracknum = 0
             self.set_track()
             self.player.pause()
             self.player.probe = QAudioProbe()
