@@ -5,7 +5,6 @@ import threading
 import time
 
 import requests
-import simplejson
 from hurry.filesize import size
 from pygs import QxtGlobalShortcut
 from PyQt5.QtCore import QSettings, QSize, Qt, QUrl
