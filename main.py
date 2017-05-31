@@ -6,7 +6,6 @@ VKMus
 from imports import *
 cleanr = re.compile('\[.*?\]')
 cleanr2 = re.compile('\(.*?\)')
-
 def clean_trackname(track):
     return re.sub(cleanr2, '', re.sub(cleanr,'', "%(artist)s %(title)s" % track).replace("OST",""))
 
@@ -443,8 +442,22 @@ class vkmus(QWidget):
         self.show()
         self.setHotkeys()
 
+def excepthook(type, error, tb):
+    print("Excepthook jumps in")
+    errorbox = QMessageBox()
+    errorbox.setWindowTitle("Критическая ошибка!")
+    errorbox.setTextFormat(Qt.RichText)
+    errorbox.setText("Название ошибки: " + str(error) +
+                     "<br>Следующая информация возможно пригодится разработчику:<pre>" +
+                     "".join(traceback.format_tb(tb))  + "</pre>"
+                     '<a href="http://vk.com/42link">Ссылка на профиль разработчика ВК</a><br>'
+                     '<a href="http://t.me/octonezd">Ссылка на профиль разработчика в Telegram</a><br>'
+                     '<a href="https://github.com/OctoNezd/vkmus/issues">Багтрекер плеера</a>')
+    errorbox.exec_()
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    sys.excepthook = excepthook
     print("Setting hotkeys")
     settings = QSettings("OctoNezd", "VKMus")    
     shortcut_play = QxtGlobalShortcut()
