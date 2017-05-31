@@ -95,6 +95,7 @@ class vkmus(QWidget):
         self.settings.setValue("last_track", self.tracknum)
         self.player.setMedia(QMediaContent(QUrl(self.tracks[self.tracknum]["url"])))
         self.trackname.setText("%(artist)s - %(title)s" % self.tracks[self.tracknum])
+        self.trayicon.showMessage(self.tracks[self.tracknum]["artist"], self.tracks[self.tracknum]["title"], self.trayicon.NoIcon, 1000)
         self.setWindowTitle("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         self.table.setCurrentRow(self.tracknum)
         self.player.play()
@@ -398,8 +399,15 @@ class vkmus(QWidget):
             self.searchtb.triggered.connect(self.exitsearch)
 
 
+    def closeEvent(self, event):
+        print("About to quit")
+        self.trayicon.hide()
+        self.trayicon.deleteLater()
+
     def initUI(self):
         self.app_icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "icon.png"))
+        self.trayicon = QSystemTrayIcon(self.app_icon)
+        self.trayicon.show()
         self.setWindowIcon(self.app_icon)
         self.toolbar = QMenuBar()
         self.searchtb = self.toolbar.addAction("Поиск")
