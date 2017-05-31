@@ -42,7 +42,7 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False, uid="0"):
                      params=params
                      )
     if r.status_code != 200:
-        raise VKError("Сервер вконтакте вернул код, которыйй не 200:%s" % r.status_code)
+        raise VKError("Сервер вконтакте вернул код, который не 200:%s" % r.status_code)
     soup = BeautifulSoup(r.text, 'html5lib')
     tracks = []
     pages = soup.find(class_="pagination")
