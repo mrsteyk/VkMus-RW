@@ -57,6 +57,7 @@ class vkmus(QWidget):
         if self.player.state() == self.player.PausedState:
             self.player.play()
         else:
+            self.trayicon.showMessage("VKMus", "Пауза", QSystemTrayIcon.NoIcon, 2000)
             self.player.pause()
 
 
