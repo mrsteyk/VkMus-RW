@@ -13,7 +13,7 @@ from PyQt5.QtMultimedia import QAudioProbe, QMediaContent, QMediaPlayer
 from PyQt5.QtNetwork import (QNetworkAccessManager, QNetworkReply,
                              QNetworkRequest)
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import (QAction, QApplication, QCheckBox, QDialog,
+from PyQt5.QtWidgets import (QAction, QApplication, QCheckBox, QDialog, QSystemTrayIcon, 
                              QFileDialog, QHBoxLayout, QKeySequenceEdit,
                              QLabel, QLineEdit, QListWidget, QListWidgetItem,
                              QMenu, QMenuBar, QMessageBox, QProgressDialog,
