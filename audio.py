@@ -28,7 +28,7 @@ def _parse_tracks(tracks_html):
         })
     return tracks
 
-def audio_get(cookie, query=None, offset=0, no_remixes=False, uid="0"):
+def audio_get(cookie, query=None, offset=0, no_remixes=False, playlist="/audios0"):
     if query:
         params = {
             "q":query,
@@ -37,13 +37,14 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False, uid="0"):
         }
     else:
         params = {}
-    r = requests.get("https://m.vk.com/audios" + uid,
+    r = requests.get("https://m.vk.com" + playlist,
                      cookies={"remixsid":cookie},
                      params=params
                      )
     if r.status_code != 200:
         raise VKError("Сервер вконтакте вернул код, который не 200:%s" % r.status_code)
     soup = BeautifulSoup(r.text, 'html5lib')
+    playlists = []
     tracks = []
     pages = soup.find(class_="pagination")
     if pages:
@@ -63,12 +64,14 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False, uid="0"):
             offset += 50
     else:
         tracks += _parse_tracks(soup.find_all(class_="ai_info"))
+    for playlist in soup.find_all(class_="al_playlist"):
+        playlists.append({"name":playlist.find_all("span")[1].text, "url":playlist["href"]})
     if no_remixes:
         for track in tracks:
             if "remix" in track["title"].lower() or "remix" in track["artist"].lower():
                 print("Found remix.")
                 tracks.remove(track)
-    return tracks
+    return tracks, playlists
 
 def track_mgmt(act,cookie, trackid):
     hashes = requests.get("https://m.vk.com/audio",
