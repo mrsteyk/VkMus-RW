@@ -13,3 +13,5 @@
 - Qt
 
 - Mozilla за emoji арбуза, которое является логотипом.
+
+- https://github.com/z3ntu/QtWaitingSpinner

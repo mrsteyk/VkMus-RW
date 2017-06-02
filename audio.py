@@ -44,7 +44,7 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False, playlist="/audios0
     if r.status_code != 200:
         raise VKError("Сервер вконтакте вернул код, который не 200:%s" % r.status_code)
     soup = BeautifulSoup(r.text, 'html5lib')
-    playlists = []
+    playlists = [{"name":"Все треки", "url":"/audios0"}]
     tracks = []
     pages = soup.find(class_="pagination")
     if pages:

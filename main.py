@@ -119,7 +119,7 @@ class vkmus(QWidget):
         self.trackname.setText("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         self.trayicon.showMessage(self.tracks[self.tracknum]["artist"], self.tracks[self.tracknum]["title"], self.trayicon.NoIcon, 1000)
         self.setWindowTitle("%(artist)s - %(title)s" % self.tracks[self.tracknum])
-        self.table.setCurrentRow(self.tracknum)
+        self.ctable.setCurrentRow(self.tracknum)
         self.player.play()
         self.player.setPosition(900)
         self.slider.setMaximum(int(self.tracks[self.tracknum]["duration"])*1000)
@@ -130,7 +130,7 @@ class vkmus(QWidget):
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
             self.albumpic.setPixmap(QPixmap(img))
         else:
-            self.albumpic.setPixmap(self.table.currentItem().icon().pixmap(QSize(135, 135)))
+            self.albumpic.setPixmap(self.ctable.currentItem().icon().pixmap(QSize(135, 135)))
 
     def next_track(self):
         if self.btnstate == 0:
@@ -239,7 +239,7 @@ class vkmus(QWidget):
         self.controlslyt.addWidget(self.volumeicon)
         self.controlslyt.addWidget(self.volume)
         self.playerwdt.setLayout(self.playerlyt)
-        self.controlslyt.insertSpacing(2, (self.volume.sizeHint().width() + self.volumeicon.sizeHint().width())-(self.shuffle.sizeHint().width()))
+        self.controlslyt.insertSpacing(2, self.volume.sizeHint().width() + self.volumeicon.sizeHint().width() + self.shuffle.sizeHint().width()*2) # KnV
         self.playerlyt.addWidget(self.trackname)
         self.poslyt.addWidget(self.trackpos)
         self.poslyt.addWidget(self.slider)
@@ -289,9 +289,9 @@ class vkmus(QWidget):
             else:
                 removeact = 0
                 addact = menu.addAction("Добавить")
-            action = menu.exec_(self.table.mapToGlobal(pos))
+            action = menu.exec_(self.ctable.mapToGlobal(pos))
             if action == downact:
-                track = self.tracks[self.table.indexFromItem(self.table.itemAt(pos)).row()]
+                track = self.tracks[self.ctable.indexFromItem(self.ctable.itemAt(pos)).row()]
                 self.path, _ = QFileDialog.getSaveFileName(None, "Куда скачать?",
                                                     "%(artist)s - %(title)s.mp3" % track,
                                                     "MPEG-1/2/2.5 Layer 3 (*.mp3)")
@@ -306,26 +306,49 @@ class vkmus(QWidget):
                 self.curdown.finished.connect(self.download_finished)
                 self.progress.show()
             elif action == removeact:
-                track = self.tracks[self.table.indexFromItem(self.table.itemAt(pos)).row()]
+                track = self.tracks[self.ctable.indexFromItem(self.ctable.itemAt(pos)).row()]
                 audio.track_mgmt("delete", self.cookie, track["mgmtid"])
-                del self.tracks[self.table.indexFromItem(self.table.itemAt(pos)).row()]
-                self.table.clear()
-                self.table.setSortingEnabled(False)
+                del self.tracks[self.ctable.indexFromItem(self.ctable.itemAt(pos)).row()]
                 self.write_into_table()
             elif action == addact:
-                track = self.tracks[self.table.indexFromItem(self.table.itemAt(pos)).row()]
+                track = self.tracks[self.ctable.indexFromItem(self.ctable.itemAt(pos)).row()]
                 audio.track_mgmt("add", self.cookie, track["mgmtid"])
             self.menulock = False
 
     def write_into_table(self):
-        self.table.setIconSize(QSize(45,45))
-        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self.downmenu)
+        self.ctable.clear()
+        self.ctable.setSortingEnabled(False)
+        self.ctable.setIconSize(QSize(45,45))
+        self.ctable.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ctable.customContextMenuRequested.connect(self.downmenu)
         for track in self.tracks:
             item = QListWidgetItem("%(artist)s\n%(title)s" % track)
-            self.table.addItem(item)
+            self.ctable.addItem(item)
             threading.Thread(target=setCover, args=(self, item, track)).start()
-        self.table.setCurrentRow(0)
+        self.ctable.setCurrentRow(0)
+        self.ctable.itemDoubleClicked.connect(self.switch_track)
+        self.ctable.setEditTriggers(self.ctable.NoEditTriggers)
+        self.ctable.setSelectionBehavior(self.ctable.SelectRows)
+        self.ctable.setSelectionMode(self.ctable.SingleSelection)
+        self.ctable.setSortingEnabled(True)
+        self.ctable.setStyleSheet("""
+        QTableWidget::item:hover {
+            background-color:!important;
+        }
+        """)
+        self.tracknum = 0
+
+    def update_table(self, index, inthread=False):
+        self.ctable = self.tabs.currentWidget().table
+        self.tabs.currentWidget().loading.show()
+        self.ctable.hide()
+        if inthread:
+            self.tracks = audio.audio_get(self.cookie, playlist=self.playlists[index]["url"])[0]
+            self.write_into_table()
+            self.tabs.currentWidget().loading.hide()
+            self.ctable.show()
+        else:
+            threading.Thread(target=self.update_table, args=(index, True)).start()
 
     def new_cookie(self, cookie):
         if cookie.name() == "remixsid":
@@ -343,7 +366,7 @@ class vkmus(QWidget):
             prev.setIcon(self.style().standardIcon(self.style().SP_MediaSkipBackward))
             prev.triggered.connect(self.previous_track)
             self.cookie = str(cookie.value(), 'utf-8')
-            self.tracks = audio.audio_get(self.cookie)
+            self.tracks, self.playlists = audio.audio_get(self.cookie)
             self.web.hide()
             self.log_label.close()
             self.player = QMediaPlayer()
@@ -352,22 +375,26 @@ class vkmus(QWidget):
             self.player.stateChanged.connect(self.state_handle)
             self.slider.sliderReleased.connect(self.changepos)
             self.slider.valueChanged.connect(self.timechange)
-            self.table = QListWidget()
+            self.tabs = QTabWidget()
+            loading = QtWaitingSpinner(None)
+            for playlist in self.playlists:
+                t = QWidget()
+                t_l = QVBoxLayout()
+                t.setLayout(t_l)
+                t.loading = loading
+                t.table = QListWidget()
+                t_l.addWidget(t.loading)
+                t_l.addWidget(t.table)
+                self.tabs.addTab(t, playlist["name"])
+            self.tabs.setCurrentIndex(0)
+            self.ctable = self.tabs.currentWidget().table
             self.write_into_table()
-            self.table.itemDoubleClicked.connect(self.switch_track)
-            self.table.setEditTriggers(self.table.NoEditTriggers)
-            self.table.setSelectionBehavior(self.table.SelectRows)
-            self.table.setSelectionMode(self.table.SingleSelection)
-            self.table.setSortingEnabled(True)
-            self.table.setStyleSheet("""
-            QTableWidget::item:hover {
-                background-color:!important;
-            }
-            """)
             trackslen = 0
             for track in self.tracks:
                 trackslen += int(track["duration"])
-            self.main_box.addWidget(self.table)
+            self.tabs.setTabPosition(self.tabs.West)
+            self.tabs.currentChanged.connect(self.update_table)
+            self.main_box.addWidget(self.tabs)
             trackinfo = QLabel("%s треков, %s, примерно %s" % (
                 len(self.tracks),
                 time_convert(trackslen * 1000),
@@ -385,7 +412,7 @@ class vkmus(QWidget):
         self.show()
 
     def switch_track(self,track):
-        self.tracknum = self.table.row(track) - 2
+        self.tracknum = self.ctable.row(track) - 2
         self.set_track()
 
     def changepos(self):
@@ -402,9 +429,8 @@ class vkmus(QWidget):
         """ % __version__)
 
     def continuesearch_thread(self, value):
-        maxval = self.table.verticalScrollBar().maximum()
+        maxval = self.ctable.verticalScrollBar().maximum()
         if value/maxval > 0.7:
-            print("Обновляем результаты")
             self.offset += 50
             self.tracks += audio.audio_get(self.cookie, self.searchq, self.offset, self.no_vasyan)
             self.write_into_table()
@@ -416,8 +442,8 @@ class vkmus(QWidget):
         self.searchtb.triggered.disconnect(self.exitsearch)
         self.searchtb.triggered.connect(self.search)
         self.searchtb.setText("Поиск")
-        self.table.verticalScrollBar().valueChanged.disconnect(self.continuesearch)
-        self.tracks = audio.audio_get(self.cookie)
+        self.ctable.verticalScrollBar().valueChanged.disconnect(self.continuesearch)
+        self.tracks, self.playlists = audio.audio_get(self.cookie)
         self.offset = 0
         self.player.stop()
         self.player.pause()
@@ -447,11 +473,11 @@ class vkmus(QWidget):
         else:
             self.no_vasyan = dialog.vasyan.isChecked()
             self.searchq = dialog.textIn.text()
-            self.tracks = audio.audio_get(self.cookie, self.searchq, 0, self.no_vasyan)
+            self.tracks, self.playlists = audio.audio_get(self.cookie, self.searchq, 0, self.no_vasyan)
             self.tracknum = 0
             self.player.stop()
             self.player.pause()
-            self.table.verticalScrollBar().valueChanged.connect(self.continuesearch)
+            self.ctable.verticalScrollBar().valueChanged.connect(self.continuesearch)
             self.write_into_table()
             self.searchtb.setText("Выйти из поиска")
             self.searchtb.triggered.disconnect()

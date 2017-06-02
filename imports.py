@@ -1,10 +1,10 @@
 import os
+import random
 import re
 import sys
 import threading
 import time
 import traceback
-import random
 
 import requests
 from hurry.filesize import size
@@ -19,9 +19,10 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import (QAction, QApplication, QCheckBox, QDialog,
                              QFileDialog, QHBoxLayout, QKeySequenceEdit,
                              QLabel, QLineEdit, QListWidget, QListWidgetItem,
-                             QMenu, QMenuBar, QMessageBox, QProgressDialog,
-                             QPushButton, QSlider, QStyleFactory,
-                             QSystemTrayIcon, QToolButton, QVBoxLayout,
-                             QWidget, QSplashScreen)
+                             QMenu, QMenuBar, QMessageBox, QProgressBar,
+                             QProgressDialog, QPushButton, QSlider,
+                             QSplashScreen, QStyleFactory, QSystemTrayIcon,
+                             QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 import audio
+from waitingspinnerwidget import QtWaitingSpinner
