@@ -392,11 +392,7 @@ class vkmus(QWidget):
         self.player.setPosition(self.slider.value())
 
     def about(self, _):
-        about = QMessageBox(self)
-        about.setWindowTitle("О программе")
-        about.setIconPixmap(self.app_icon.pixmap(QSize(150, 150)))
-        about.setTextFormat(Qt.RichText)
-        about.setText("""
+        QMessageBox.about(self, "О программе","""
         <p align="center">VKMus %s</p>
         <ul>
         <li>Обложки достаются с iTunes, спасибо Apple за их API</li>
@@ -404,7 +400,6 @@ class vkmus(QWidget):
         <li>Иконка - эмодзи арбуза из Firefox OS</li>
         </ul>
         """ % __version__)
-        about.show()
 
     def continuesearch_thread(self, value):
         maxval = self.table.verticalScrollBar().maximum()
@@ -467,6 +462,7 @@ class vkmus(QWidget):
         print("About to quit")
         self.trayicon.hide()
         self.trayicon.deleteLater()
+        self.settings.setValue("geometry", self.saveGeometry())
 
     def initUI(self):
         self.app_icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "icon.png"))
@@ -487,6 +483,8 @@ class vkmus(QWidget):
         self.main_box.addWidget(self.log_label)
         self.main_box.addWidget(self.web)
         self.setGeometry(600, 600, 800, 600)
+        if self.settings.value("geometry"):
+            self.restoreGeometry(self.settings.value("geometry"))
         self.setWindowTitle('VKMus')
         self.main_box.setObjectName("body")
         self.setStyleSheet("""
