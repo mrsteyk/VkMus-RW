@@ -66,6 +66,22 @@ class vkmus(QWidget):
     def setHotkeys(self):
         return
 
+    def erase_vk(self):
+        dialog = QMessageBox(self)
+        dialog.setIcon(dialog.Question)
+        dialog.setText("Точно выйти из ВКонтакте?")
+        dialog.addButton("Да", dialog.YesRole)
+        dialog.addButton("Нет", dialog.NoRole)        
+        if dialog.exec_() == 0:
+            self.store.deleteAllCookies()
+            dl = QMessageBox(self)
+            dl.setText("Готово. VKMus будет перезапущен")
+            dl.setIcon(dl.Information)
+            dl.show()
+            self.close()
+            ex()
+
+
     def settingswin(self):
         self.settingsdial = QDialog(self)
         self.settingsdial.setWindowTitle("Настройки")
@@ -85,6 +101,9 @@ class vkmus(QWidget):
         self.settingsdial.setFocus(Qt.NoFocusReason)
         self.settingsdial.lyt.addWidget(exbtn)
         exbtn.clicked.connect(self.settingsdial.accept)
+        erase_vk = QPushButton("Выйти из ВКонтакте")
+        erase_vk.clicked.connect(self.erase_vk)
+        self.settingsdial.lyt.addWidget(erase_vk)
         if self.settingsdial.exec_() != 0:
             print("Setting new hotkeys")
             self.settings.setValue("h_play", QKeySequence(self.settingsdial.keyseq_play.keySequence()[0]))
@@ -325,7 +344,7 @@ class vkmus(QWidget):
             prev.triggered.connect(self.previous_track)
             self.cookie = str(cookie.value(), 'utf-8')
             self.tracks = audio.audio_get(self.cookie)
-            self.web.close()
+            self.web.hide()
             self.log_label.close()
             self.player = QMediaPlayer()
             self.create_player_ui()
@@ -358,9 +377,12 @@ class vkmus(QWidget):
             self.main_box.addWidget(trackinfo)
             self.set_track()
             self.player.pause()
+            self.searchtb = self.toolbar.addAction("Поиск")
+            self.toolbar.addAction("Настройки").triggered.connect(self.settingswin)
+            self.searchtb.triggered.connect(self.search)
+            self.toolbar.addAction("О программе").triggered.connect(self.about)
             splash.hide()
-            self.show()
-
+        self.show()
 
     def switch_track(self,track):
         self.tracknum = self.table.row(track) - 2
@@ -453,10 +475,6 @@ class vkmus(QWidget):
         self.trayicon.show()
         self.setWindowIcon(self.app_icon)
         self.toolbar = QMenuBar()
-        self.searchtb = self.toolbar.addAction("Поиск")
-        self.toolbar.addAction("Настройки").triggered.connect(self.settingswin)
-        self.searchtb.triggered.connect(self.search)
-        self.toolbar.addAction("О программе").triggered.connect(self.about)
         self.main_box = QVBoxLayout()
         self.main_box.addWidget(self.toolbar)
         self.web = QWebEngineView()
@@ -482,7 +500,6 @@ class vkmus(QWidget):
             border-top:1px solid grey;
         }
         """)
-        self.show()
         self.setHotkeys()
 
 def excepthook(type, error, tb):
