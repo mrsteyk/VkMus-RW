@@ -4,6 +4,7 @@
 VKMus
 """
 from imports import *
+__version__ = "1.5"
 cleanr = re.compile('\[.*?\]')
 cleanr2 = re.compile('\(.*?\)')
 def clean_trackname(track):
@@ -102,6 +103,7 @@ class vkmus(QWidget):
         self.player.setPosition(900)
         self.slider.setMaximum(int(self.tracks[self.tracknum]["duration"])*1000)
         self.tracklen.setText(time_convert(self.slider.maximum()))
+        self.trayicon.setToolTip("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         if self.tracks[self.tracknum]["cover"]:
             img = QImage()
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
@@ -335,13 +337,13 @@ class vkmus(QWidget):
         about.setIconPixmap(self.app_icon.pixmap(QSize(150, 150)))
         about.setTextFormat(Qt.RichText)
         about.setText("""
-        <p align="center">VKMus v1.0</p>
+        <p align="center">VKMus %s</p>
         <ul>
         <li>Обложки достаются с iTunes, спасибо Apple за их API</li>
         <li>Сделано на PyQt5.</li>
         <li>Иконка - эмодзи арбуза из Firefox OS</li>
         </ul>
-        """)
+        """ % __version__)
         about.show()
 
     def continuesearch_thread(self, value):
@@ -459,6 +461,8 @@ def excepthook(type, error, tb):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setApplicationVersion(__version__)
+    app.setApplicationName("VKMus")
     sys.excepthook = excepthook
     print("Setting hotkeys")
     settings = QSettings("OctoNezd", "VKMus")    
