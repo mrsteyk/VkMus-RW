@@ -240,7 +240,7 @@ class vkmus(QWidget):
                 addact = menu.addAction("Добавить")
             action = menu.exec_(self.table.mapToGlobal(pos))
             if action == downact:
-                track = self.tracks[self.table.itemAt(pos).row()]
+                track = self.tracks[self.table.indexFromItem(self.table.itemAt(pos)).row()]
                 self.path, _ = QFileDialog.getSaveFileName(None, "Куда скачать?",
                                                     "%(artist)s - %(title)s.mp3" % track,
                                                     "MPEG-1/2/2.5 Layer 3 (*.mp3)")
@@ -255,12 +255,14 @@ class vkmus(QWidget):
                 self.curdown.finished.connect(self.download_finished)
                 self.progress.show()
             elif action == removeact:
-                track = self.tracks[self.table.itemAt(pos).row()]
+                track = self.tracks[self.table.indexFromItem(self.table.itemAt(pos)).row()]
                 audio.track_mgmt("delete", self.cookie, track["mgmtid"])
-                del self.tracks[self.table.itemAt(pos).row()]
+                del self.tracks[self.table.indexFromItem(self.table.itemAt(pos)).row()]
+                self.table.clear()
+                self.table.setSortingEnabled(False)
                 self.write_into_table()
             elif action == addact:
-                track = self.tracks[self.table.itemAt(pos).row()]
+                track = self.tracks[self.table.indexFromItem(self.table.itemAt(pos)).row()]
                 audio.track_mgmt("add", self.cookie, track["mgmtid"])
             self.menulock = False
 
