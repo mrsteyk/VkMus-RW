@@ -22,6 +22,6 @@ from PyQt5.QtWidgets import (QAction, QApplication, QCheckBox, QDialog,
                              QMenu, QMenuBar, QMessageBox, QProgressDialog,
                              QPushButton, QSlider, QStyleFactory,
                              QSystemTrayIcon, QToolButton, QVBoxLayout,
-                             QWidget)
+                             QWidget, QSplashScreen)
 
 import audio

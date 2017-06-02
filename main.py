@@ -310,7 +310,9 @@ class vkmus(QWidget):
 
     def new_cookie(self, cookie):
         if cookie.name() == "remixsid":
-            print("Auth complete")
+            splash = QSplashScreen(self, self.app_icon.pixmap(512, 512))
+            splash.show()
+            self.hide()
             menu = self.trayicon.contextMenu()
             self.ppause_tray = menu.addAction("Играть")
             self.ppause_tray.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
@@ -356,9 +358,8 @@ class vkmus(QWidget):
             self.main_box.addWidget(trackinfo)
             self.set_track()
             self.player.pause()
-            #self.player.probe = QAudioProbe()
-            #self.player.probe.setSource(self.player)
-            #self.player.probe.audioBufferProbed.connect(self.visual)
+            splash.hide()
+            self.show()
 
 
     def switch_track(self,track):
