@@ -210,7 +210,11 @@ class vkmus(QWidget):
                 self.next_track()
         elif self.player.state() == self.player.PlayingState:
             self.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPause))
+            self.ppause_tray.setIcon(self.style().standardIcon(self.style().SP_MediaPause))
+            self.ppause_tray.setText("Поставить на паузу")
         elif self.player.state() == self.player.PausedState:
+            self.ppause_tray.setText("Играть")
+            self.ppause_tray.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
             self.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
 
     def timechange(self, value):
@@ -278,13 +282,19 @@ class vkmus(QWidget):
             threading.Thread(target=setCover, args=(self, item, track)).start()
         self.table.setCurrentRow(0)
 
-    def visual(self, buf):
-        return
-        print(buf.data())
-
     def new_cookie(self, cookie):
         if cookie.name() == "remixsid":
             print("Auth complete")
+            menu = self.trayicon.contextMenu()
+            self.ppause_tray = menu.addAction("Играть")
+            self.ppause_tray.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
+            self.ppause_tray.triggered.connect(self.pbutton_hnd)
+            next = menu.addAction("Следующий трек")
+            next.setIcon(self.style().standardIcon(self.style().SP_MediaSkipForward))
+            next.triggered.connect(self.next_track)
+            prev = menu.addAction("Предыдущий трек")
+            prev.setIcon(self.style().standardIcon(self.style().SP_MediaSkipBackward))
+            prev.triggered.connect(self.previous_track)
             self.cookie = str(cookie.value(), 'utf-8')
             self.tracks = audio.audio_get(self.cookie)
             self.web.close()
@@ -320,9 +330,10 @@ class vkmus(QWidget):
             self.main_box.addWidget(trackinfo)
             self.set_track()
             self.player.pause()
-            self.player.probe = QAudioProbe()
-            self.player.probe.setSource(self.player)
-            self.player.probe.audioBufferProbed.connect(self.visual)
+            #self.player.probe = QAudioProbe()
+            #self.player.probe.setSource(self.player)
+            #self.player.probe.audioBufferProbed.connect(self.visual)
+
 
     def switch_track(self,track):
         self.tracknum = self.table.row(track) - 2
@@ -411,6 +422,7 @@ class vkmus(QWidget):
     def initUI(self):
         self.app_icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "icon.png"))
         self.trayicon = QSystemTrayIcon(self.app_icon)
+        self.trayicon.setContextMenu(QMenu())
         self.trayicon.show()
         self.setWindowIcon(self.app_icon)
         self.toolbar = QMenuBar()
