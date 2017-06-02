@@ -112,11 +112,12 @@ class vkmus(QWidget):
             self.albumpic.setPixmap(self.table.currentItem().icon().pixmap(QSize(135, 135)))
 
     def next_track(self):
-        if self.shuffle.isChecked() == False:
-            if self.tracknum + 1 > len(self.tracks) - 1:
-                self.tracknum = 0
-            else:
-                self.tracknum += 1
+        if self.shuffle.isChecked() is False:
+            if self.repeat.isChecked() is False:
+                if self.tracknum + 1 > len(self.tracks) - 1:
+                    self.tracknum = 0
+                else:
+                    self.tracknum += 1
         else:
             self.tracknum = random.randint(0, len(self.tracks)-1)
         self.dont_autoswitch = True
@@ -174,6 +175,8 @@ class vkmus(QWidget):
         self.volume.valueChanged.connect(self.vol_ctl)
         self.shuffle = QToolButton()
         self.shuffle.setCheckable(True)
+        self.repeat = QToolButton()
+        self.repeat.setCheckable(True)
         # Позиция
         self.pos = QWidget()
         self.poslyt = QHBoxLayout()
@@ -181,6 +184,7 @@ class vkmus(QWidget):
         # Иконки
         icons = QIcon()
         self.shuffle.setIcon(icons.fromTheme("shuffle"))
+        self.repeat.setIcon(icons.fromTheme("media-playlist-repeat"))
         self.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
         self.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolume))
         self.playbtn.setFixedSize(40, 40)
@@ -194,6 +198,7 @@ class vkmus(QWidget):
         self.nextbtn.clicked.connect(self.next_track)
         # Добавляем
         self.controlslyt.addWidget(self.shuffle)
+        self.controlslyt.addWidget(self.repeat)
         self.controlslyt.addStretch()
         self.controlslyt.addWidget(self.prevbtn)
         self.controlslyt.addWidget(self.playbtn)
@@ -202,7 +207,7 @@ class vkmus(QWidget):
         self.controlslyt.addWidget(self.volumeicon)
         self.controlslyt.addWidget(self.volume)
         self.playerwdt.setLayout(self.playerlyt)
-        self.controlslyt.insertSpacing(1, self.volume.sizeHint().width() + self.volumeicon.sizeHint().width())
+        self.controlslyt.insertSpacing(2, (self.volume.sizeHint().width() + self.volumeicon.sizeHint().width())-(self.repeat.sizeHint().width() + self.shuffle.sizeHint().width()))
         self.playerlyt.addWidget(self.trackname)
         self.poslyt.addWidget(self.trackpos)
         self.poslyt.addWidget(self.slider)
