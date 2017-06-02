@@ -65,7 +65,7 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False, playlist="/audios0
     else:
         tracks += _parse_tracks(soup.find_all(class_="ai_info"))
     for playlist in soup.find_all(class_="al_playlist"):
-        playlists.append({"name":playlist.find_all("span")[1].text, "url":playlist["href"]})
+        playlists.append({"name":playlist.find(class_="audioPlaylists__itemTitle").text, "url":playlist["href"]})
     if no_remixes:
         for track in tracks:
             if "remix" in track["title"].lower() or "remix" in track["artist"].lower():
