@@ -4,10 +4,12 @@
 VKMus
 """
 from imports import *
-#import PyQt5
-#pyqt = os.path.dirname(PyQt5.__file__)
-#QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
-#QApplication.addLibraryPath(os.path.join(pyqt, "Qt", "bin"))
+import platform
+if platform.system == "windows":
+    import PyQt5
+    pyqt = os.path.dirname(PyQt5.__file__)
+    QApplication.addLibraryPath(os.path.join(pyqt, "plugins"))
+    QApplication.addLibraryPath(os.path.join(pyqt, "Qt", "bin"))
 __version__ = "1.5"
 cleanr = re.compile('\[.*?\]')
 cleanr2 = re.compile('\(.*?\)')
