@@ -143,7 +143,8 @@ class vkmus(QWidget):
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
             self.playerwdt.albumpic.setPixmap(QPixmap(img))
         else:
-            self.playerwdt.albumpic.setPixmap(self.ctable.currentItem().icon().pixmap(QSize(135, 135)))
+            if not self.ctable.currentItem():
+                self.playerwdt.albumpic.setPixmap(self.ctable.currentItem().icon().pixmap(QSize(135, 135)))
         if self.smallmode and self.tabs.isVisible():
             self.smode_trackop()
 
