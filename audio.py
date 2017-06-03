@@ -28,7 +28,7 @@ def _parse_tracks(tracks_html):
         })
     return tracks
 
-def audio_get(cookie, query=None, offset=0, no_remixes=False, playlist="/audios0"):
+def audio_get(cookie, query=None, offset=0, no_remixes=False, playlist="/audios0", uid="0"):
     if query:
         params = {
             "q":query,
