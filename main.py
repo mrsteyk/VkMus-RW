@@ -27,9 +27,12 @@ def setCover(window, item, track):
         img.loadFromData(requests.get(track["cover"]).content)
         item.setIcon(QIcon(QPixmap(img)))
     else:
-        covers = requests.get("https://itunes.apple.com/search", params={
-            "term":clean_trackname(track),
-        }).json()
+        try:
+            covers = requests.get("https://itunes.apple.com/search", params={
+                "term":clean_trackname(track),
+            }).json()
+        except Exception:
+            return
         if covers["resultCount"] == 0:
             pass
         else:
@@ -126,7 +129,7 @@ class vkmus(QWidget):
     def set_track(self):
         self.settings.setValue("last_track", self.tracknum)
         self.player.setMedia(QMediaContent(QUrl(self.tracks[self.tracknum]["url"])))
-        self.playerwdt.trackname.setText("%(artist)s - %(title)s" % self.tracks[self.tracknum])
+        self.playerwdt.trackname.setText("%(artist)s\n%(title)s" % self.tracks[self.tracknum])
         self.trayicon.showMessage(self.tracks[self.tracknum]["artist"], self.tracks[self.tracknum]["title"], self.trayicon.NoIcon, 1000)
         self.setWindowTitle("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         self.ctable.setCurrentRow(self.tracknum)
