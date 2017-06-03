@@ -32,10 +32,12 @@ def setCover(window, item, track):
             item.setIcon(QIcon(QPixmap(img)))
 
 def time_convert(time):
-    seconds = time / 1000
-    m, s = divmod(seconds, 60)
-    h, m = divmod(m, 60)
-    return "%d:%02d:%02d" % (h, m, s)
+    seconds = int(time / 1000)
+    time = str(datetime.timedelta(seconds=seconds))
+    if time.startswith("0:"):
+        return time[2:]
+    else:
+        return time
 
 class vkmus(QWidget):
 
