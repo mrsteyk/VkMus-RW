@@ -49,6 +49,7 @@ def audio_get(cookie, query=None, offset=0, no_remixes=False, playlist="/audios0
     pages = soup.find(class_="pagination")
     if pages:
         tracks += _parse_tracks(soup.find_all(class_="ai_info"))
+        last_offset = 50 # Fallback value
         for page in pages.find_all(class_="pg_link"):
             if page.text == "»":
                 last_offset = int(page["href"].split("offset=")[-1])
