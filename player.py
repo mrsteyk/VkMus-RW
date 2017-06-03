@@ -96,6 +96,7 @@ class Ui_Player(object):
         self.playbtn.setFocusPolicy(QtCore.Qt.NoFocus)
         icon = QtGui.QIcon.fromTheme("media-playback-start")
         self.playbtn.setIcon(icon)
+        self.playbtn.setIconSize(QtCore.QSize(32, 32))
         self.playbtn.setObjectName("playbtn")
         self.horizontalLayout.addWidget(self.playbtn)
         self.nextbtn = QtWidgets.QToolButton(self.player_ctl)
