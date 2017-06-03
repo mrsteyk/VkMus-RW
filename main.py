@@ -178,6 +178,7 @@ class vkmus(QWidget):
 
     def create_player_ui(self):
         widget = QWidget()
+        widget.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Ignored)
         self.playerwdt = player.Ui_Player()
         self.playerwdt.setupUi(widget)
         # Сигналы
@@ -334,7 +335,7 @@ class vkmus(QWidget):
             trackslen = 0
             for track in self.tracks:
                 trackslen += int(track["duration"])
-            self.tabs.setTabPosition(self.tabs.West)
+            self.tabs.setTabPosition(self.tabs.East)
             self.tabs.currentChanged.connect(self.update_table)
             self.main_box.addWidget(self.tabs)
             self.set_track()
