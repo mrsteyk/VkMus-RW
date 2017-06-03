@@ -116,21 +116,21 @@ class vkmus(QWidget):
     def set_track(self):
         self.settings.setValue("last_track", self.tracknum)
         self.player.setMedia(QMediaContent(QUrl(self.tracks[self.tracknum]["url"])))
-        self.trackname.setText("%(artist)s - %(title)s" % self.tracks[self.tracknum])
+        self.playerwdt.trackname.setText("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         self.trayicon.showMessage(self.tracks[self.tracknum]["artist"], self.tracks[self.tracknum]["title"], self.trayicon.NoIcon, 1000)
         self.setWindowTitle("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         self.ctable.setCurrentRow(self.tracknum)
         self.player.play()
         self.player.setPosition(900)
-        self.slider.setMaximum(int(self.tracks[self.tracknum]["duration"])*1000)
-        self.tracklen.setText(time_convert(self.slider.maximum()))
+        self.playerwdt.slider.setMaximum(int(self.tracks[self.tracknum]["duration"])*1000)
+        self.playerwdt.tracklen.setText(time_convert(self.playerwdt.slider.maximum()))
         self.trayicon.setToolTip("%(artist)s - %(title)s" % self.tracks[self.tracknum])
         if self.tracks[self.tracknum]["cover"]:
             img = QImage()
             img.loadFromData(requests.get(self.tracks[self.tracknum]["cover"]).content)
-            self.albumpic.setPixmap(QPixmap(img))
+            self.playerwdt.albumpic.setPixmap(QPixmap(img))
         else:
-            self.albumpic.setPixmap(self.ctable.currentItem().icon().pixmap(QSize(135, 135)))
+            self.playerwdt.albumpic.setPixmap(self.ctable.currentItem().icon().pixmap(QSize(135, 135)))
 
     def next_track(self):
         if self.btnstate == 0:
@@ -156,9 +156,9 @@ class vkmus(QWidget):
     def vol_ctl(self, vol):
         self.player.setVolume(vol)
         if vol == 0:
-            self.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolumeMuted))
+            self.playerwdt.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolumeMuted))
         else:
-            self.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolume))
+            self.playerwdt.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolume))
 
     def button_shuffle(self):
         if self.btnstate + 1 == 3:
@@ -166,104 +166,45 @@ class vkmus(QWidget):
         else:
             self.btnstate += 1
         if self.btnstate == 0:
-            self.nextbtn.setDisabled(False)
-            self.prevbtn.setDisabled(False)
+            self.playerwdt.nextbtn.setDisabled(False)
+            self.playerwdt.prevbtn.setDisabled(False)
         elif self.btnstate == 1:
-            self.nextbtn.setDisabled(True)
-            self.prevbtn.setDisabled(True)
+            self.playerwdt.nextbtn.setDisabled(True)
+            self.playerwdt.prevbtn.setDisabled(True)
         else:
-            self.nextbtn.setDisabled(False)
-            self.prevbtn.setDisabled(True)
-        self.shuffle.setIcon(QIcon().fromTheme(STATES[self.btnstate]))
+            self.playerwdt.nextbtn.setDisabled(False)
+            self.playerwdt.prevbtn.setDisabled(True)
+        self.playerwdt.shuffle.setIcon(QIcon().fromTheme(STATES[self.btnstate]))
 
     def create_player_ui(self):
-        icons = QIcon()
-        # Виджет плеера
-        player = QWidget()
-        self.player_body = QHBoxLayout()
-        player.setLayout(self.player_body)
-        self.playerwdt = QWidget()
-        player.setObjectName("player")
-        self.albumpic = QLabel()
-        self.albumpic.setAlignment(Qt.AlignCenter)
-        self.albumpic.setMinimumWidth(135)
-        self.albumpic.setMaximumWidth(135)
-        self.albumpic.setMinimumHeight(135)
-        self.albumpic.setMaximumHeight(135)
-        self.player_body.addWidget(self.albumpic)
-        self.player_body.addWidget(self.playerwdt)
-        self.playerlyt = QVBoxLayout()
-        self.trackname = QLabel()
-        self.trackname.setAlignment(Qt.AlignCenter)
-        player.setMaximumHeight(155)
-        self.slider = QSlider(Qt.Horizontal)
-        self.tracklen = QLabel()
-        self.trackpos = QLabel()
-        # Кнопки управления
-        self.controls = QWidget()
-        self.controlslyt = QHBoxLayout()
-        self.playbtn = QToolButton()
-        self.prevbtn = QToolButton()
-        self.nextbtn = QToolButton()
-        self.volumeicon = QToolButton()
-        self.volume = QSlider(Qt.Horizontal)
-        self.player.setVolume(int(self.settings.value("volume", 100)))
-        self.volume.setValue(self.player.volume())
-        self.volume.valueChanged.connect(self.vol_ctl)
-        self.shuffle = QToolButton()
-        self.shuffle.released.connect(self.button_shuffle)
-        # Позиция
-        self.pos = QWidget()
-        self.poslyt = QHBoxLayout()
-        self.pos.setLayout(self.poslyt)
-        # Иконки
-        self.shuffle.setIcon(icons.fromTheme("media-playlist-repeat"))
-        self.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
-        self.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolume))
-        self.playbtn.setFixedSize(40, 40)
-        self.prevbtn.setIcon(self.style().standardIcon(self.style().SP_MediaSkipBackward))
-        self.nextbtn.setIcon(self.style().standardIcon(self.style().SP_MediaSkipForward))
+        widget = QWidget()
+        self.playerwdt = player.Ui_Player()
+        self.playerwdt.setupUi(widget)
         # Сигналы
-        self.volumeicon.clicked.connect(lambda: self.player.setMuted(not self.player.isMuted()))
-        self.player.mutedChanged.connect(lambda muted:self.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolumeMuted) if muted else self.style().standardIcon(self.style().SP_MediaVolume)))
-        self.playbtn.clicked.connect(self.pbutton_hnd)
-        self.prevbtn.clicked.connect(self.previous_track)
-        self.nextbtn.clicked.connect(self.next_track)
-        # Добавляем
-        self.controlslyt.addWidget(self.shuffle)
-        self.controlslyt.addStretch()
-        self.controlslyt.addWidget(self.prevbtn)
-        self.controlslyt.addWidget(self.playbtn)
-        self.controlslyt.addWidget(self.nextbtn)
-        self.controlslyt.addStretch()
-        self.controlslyt.addWidget(self.volumeicon)
-        self.controlslyt.addWidget(self.volume)
-        self.playerwdt.setLayout(self.playerlyt)
-        self.controlslyt.insertSpacing(2, self.volume.sizeHint().width() + self.volumeicon.sizeHint().width() + self.shuffle.sizeHint().width()*2) # KnV
-        self.playerlyt.addWidget(self.trackname)
-        self.poslyt.addWidget(self.trackpos)
-        self.poslyt.addWidget(self.slider)
-        self.poslyt.addWidget(self.tracklen)
-        self.playerlyt.addWidget(self.pos)
-        self.playerlyt.addWidget(self.controls)
-        self.controls.setLayout(self.controlslyt)
-        self.main_box.addWidget(player)
+        self.playerwdt.volume.valueChanged.connect(self.vol_ctl)
+        self.playerwdt.volumeicon.clicked.connect(lambda: self.player.setMuted(not self.player.isMuted()))
+        self.player.mutedChanged.connect(lambda muted:self.playerwdt.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolumeMuted) if muted else self.style().standardIcon(self.style().SP_MediaVolume)))
+        self.playerwdt.playbtn.clicked.connect(self.pbutton_hnd)
+        self.playerwdt.prevbtn.clicked.connect(self.previous_track)
+        self.playerwdt.nextbtn.clicked.connect(self.next_track)
+        self.playerwdt.shuffle.released.connect(self.button_shuffle)
+        self.main_box.addWidget(widget)
 
     def state_handle(self):
         if self.player.state() == self.player.StoppedState:
             if not self.dont_autoswitch:
                 self.next_track()
         elif self.player.state() == self.player.PlayingState:
-            self.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPause))
+            self.playerwdt.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPause))
             self.ppause_tray.setIcon(self.style().standardIcon(self.style().SP_MediaPause))
             self.ppause_tray.setText("Поставить на паузу")
         elif self.player.state() == self.player.PausedState:
             self.ppause_tray.setText("Играть")
             self.ppause_tray.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
-            self.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
+            self.playerwdt.playbtn.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
 
     def timechange(self, value):
-        self.trackpos.setText(time_convert(value))
+        self.playerwdt.trackpos.setText(time_convert(value))
 
     def progress_control(self, received, total):
         self.progress.setMaximum(total)
@@ -371,12 +312,13 @@ class vkmus(QWidget):
             self.log_label.close()
             self.player = QMediaPlayer()
             self.create_player_ui()
-            self.player.positionChanged.connect(self.slider.setValue)
+            self.player.positionChanged.connect(self.playerwdt.slider.setValue)
             self.player.stateChanged.connect(self.state_handle)
-            self.slider.sliderReleased.connect(self.changepos)
-            self.slider.valueChanged.connect(self.timechange)
+            self.playerwdt.slider.sliderReleased.connect(self.changepos)
+            self.playerwdt.slider.valueChanged.connect(self.timechange)
             self.tabs = QTabWidget()
             loading = QtWaitingSpinner(None)
+            loading.setColor(app.palette().light())
             for playlist in self.playlists:
                 t = QWidget()
                 t_l = QVBoxLayout()
@@ -395,13 +337,6 @@ class vkmus(QWidget):
             self.tabs.setTabPosition(self.tabs.West)
             self.tabs.currentChanged.connect(self.update_table)
             self.main_box.addWidget(self.tabs)
-            trackinfo = QLabel("%s треков, %s, примерно %s" % (
-                len(self.tracks),
-                time_convert(trackslen * 1000),
-                size(trackslen * 128 * 192)
-            ))
-            trackinfo.setObjectName("trackcount")
-            self.main_box.addWidget(trackinfo)
             self.set_track()
             self.player.pause()
             self.searchtb = self.toolbar.addAction("Поиск")
@@ -416,7 +351,7 @@ class vkmus(QWidget):
         self.set_track()
 
     def changepos(self):
-        self.player.setPosition(self.slider.value())
+        self.player.setPosition(self.playerwdt.slider.value())
 
     def about(self, _):
         QMessageBox.about(self, "О программе","""
@@ -497,33 +432,27 @@ class vkmus(QWidget):
         self.trayicon.show()
         self.setWindowIcon(self.app_icon)
         self.toolbar = QMenuBar()
-        self.main_box = QVBoxLayout()
-        self.main_box.addWidget(self.toolbar)
+        main_box = QVBoxLayout()
+        main_box.addWidget(self.toolbar)
+        mainwdt = QWidget()
+        self.main_box = QHBoxLayout()
+        mainwdt.setLayout(self.main_box)
         self.web = QWebEngineView()
         self.web.load(QUrl("http://m.vk.com"))
         self.web.show()
         self.store = self.web.page().profile().cookieStore()
         self.store.cookieAdded.connect(self.new_cookie)
-        self.setLayout(self.main_box)
+        self.setLayout(main_box)
         self.log_label = QLabel("Авторизуйтесь в мобильной версии ВК для начала")
-        self.main_box.addWidget(self.log_label)
-        self.main_box.addWidget(self.web)
+        main_box.addWidget(self.log_label)
+        main_box.addWidget(self.web)
+        main_box.addWidget(mainwdt)
         self.setGeometry(600, 600, 800, 600)
         if self.settings.value("geometry"):
             self.restoreGeometry(self.settings.value("geometry"))
         self.setWindowTitle('VKMus')
         self.main_box.setObjectName("body")
-        self.setStyleSheet("""
-        #body {
-            margin:0;
-        }
-        #player {
-            border-bottom:1px solid grey;
-        }
-        #trackcount {
-            border-top:1px solid grey;
-        }
-        """)
+
         self.setHotkeys()
 
 def excepthook(type, error, tb):
@@ -538,9 +467,12 @@ def excepthook(type, error, tb):
                      '<a href="http://t.me/octonezd">Ссылка на профиль разработчика в Telegram</a><br>'
                      '<a href="https://github.com/OctoNezd/vkmus/issues">Багтрекер плеера</a>')
     errorbox.exec_()
+    print("".join(traceback.format_tb(tb)))
+    raise SystemExit
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    print(os.getpid())
     app.setApplicationVersion(__version__)
     app.setApplicationName("VKMus")
     sys.excepthook = excepthook

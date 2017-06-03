@@ -20,9 +20,11 @@ from PyQt5.QtWidgets import (QAction, QApplication, QCheckBox, QDialog,
                              QFileDialog, QHBoxLayout, QKeySequenceEdit,
                              QLabel, QLineEdit, QListWidget, QListWidgetItem,
                              QMenu, QMenuBar, QMessageBox, QProgressBar,
-                             QProgressDialog, QPushButton, QSlider,
-                             QSplashScreen, QStyleFactory, QSystemTrayIcon,
-                             QTabWidget, QToolButton, QVBoxLayout, QWidget)
+                             QProgressDialog, QPushButton, QSizePolicy,
+                             QSlider, QSplashScreen, QStyleFactory,
+                             QSystemTrayIcon, QTabWidget, QToolButton,
+                             QVBoxLayout, QWidget)
 
 import audio
+import player
 from waitingspinnerwidget import QtWaitingSpinner
