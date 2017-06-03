@@ -48,8 +48,10 @@ class vkmus(QWidget):
         self.menulock = False
         self.settings = QSettings("OctoNezd", "VKMus")
         self.tracknum = int(self.settings.value("last_track", 0))
+        self.smallmode = False
         self.initUI()
         self.btnstate = 0
+        self.cookie = None
         shortcut_play.activated.connect(self.pbutton_hnd)
         shortcut_next.activated.connect(self.next_track)
         shortcut_prev.activated.connect(self.previous_track)
@@ -131,6 +133,8 @@ class vkmus(QWidget):
             self.playerwdt.albumpic.setPixmap(QPixmap(img))
         else:
             self.playerwdt.albumpic.setPixmap(self.ctable.currentItem().icon().pixmap(QSize(135, 135)))
+        if self.smallmode and self.tabs.isVisible():
+            self.smode_trackop()
 
     def next_track(self):
         if self.btnstate == 0:
@@ -177,10 +181,10 @@ class vkmus(QWidget):
         self.playerwdt.shuffle.setIcon(QIcon().fromTheme(STATES[self.btnstate]))
 
     def create_player_ui(self):
-        widget = QWidget()
-        widget.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Ignored)
+        self.pwidget = QWidget()
+        self.pwidget.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Ignored)
         self.playerwdt = player.Ui_Player()
-        self.playerwdt.setupUi(widget)
+        self.playerwdt.setupUi(self.pwidget)
         # Сигналы
         self.playerwdt.volume.valueChanged.connect(self.vol_ctl)
         self.playerwdt.volumeicon.clicked.connect(lambda: self.player.setMuted(not self.player.isMuted()))
@@ -189,7 +193,25 @@ class vkmus(QWidget):
         self.playerwdt.prevbtn.clicked.connect(self.previous_track)
         self.playerwdt.nextbtn.clicked.connect(self.next_track)
         self.playerwdt.shuffle.released.connect(self.button_shuffle)
-        self.main_box.addWidget(widget)
+        self.main_box.addWidget(self.pwidget)
+        self.playerwdt.goto_tracks.clicked.connect(self.smode_trackop)
+
+    def smode_trackop(self):
+        self.pwidget.setVisible(not self.pwidget.isVisible())
+        self.goto_player.setVisible(not self.goto_player.isVisible())
+        self.tabs.setVisible(not self.tabs.isVisible())
+
+    def adaptive_tlist(self):
+        if self.width() < 700:
+            self.smallmode = True
+            self.pwidget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+            self.tabs.hide()
+            self.playerwdt.goto_tracks.show()
+        else:
+            self.smallmode = False
+            self.tabs.show()
+            self.pwidget.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Ignored)
+            self.playerwdt.goto_tracks.hide()
 
     def state_handle(self):
         if self.player.state() == self.player.StoppedState:
@@ -292,6 +314,10 @@ class vkmus(QWidget):
         else:
             threading.Thread(target=self.update_table, args=(index, True)).start()
 
+    def resizeEvent(self, event):
+        if self.cookie:
+            self.adaptive_tlist()
+
     def new_cookie(self, cookie):
         if cookie.name() == "remixsid":
             splash = QSplashScreen(self, self.app_icon.pixmap(512, 512))
@@ -344,7 +370,17 @@ class vkmus(QWidget):
             self.toolbar.addAction("Настройки").triggered.connect(self.settingswin)
             self.searchtb.triggered.connect(self.search)
             self.toolbar.addAction("О программе").triggered.connect(self.about)
+            self.goto_player = QToolButton()
+            self.goto_player.setFocusPolicy(Qt.NoFocus)
+            self.goto_player.setToolButtonStyle(Qt.ToolButtonFollowStyle)
+            self.goto_player.setAutoRaise(True)
+            self.goto_player.setArrowType(Qt.LeftArrow)
+            self.goto_player.setText("Назад в плеер")
+            self.goto_player.clicked.connect(self.smode_trackop)
+            self.goto_player.hide()
+            self.corelyt.insertWidget(1,self.goto_player)
             splash.hide()
+            self.adaptive_tlist()
         self.show()
 
     def switch_track(self,track):
@@ -427,14 +463,16 @@ class vkmus(QWidget):
         self.settings.setValue("geometry", self.saveGeometry())
 
     def initUI(self):
+        self.small_lyt = QHBoxLayout()
         self.app_icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "icon.png"))
         self.trayicon = QSystemTrayIcon(self.app_icon)
         self.trayicon.setContextMenu(QMenu())
         self.trayicon.show()
         self.setWindowIcon(self.app_icon)
         self.toolbar = QMenuBar()
-        main_box = QVBoxLayout()
-        main_box.addWidget(self.toolbar)
+        self.toolbar.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        self.corelyt = QVBoxLayout()
+        self.corelyt.addWidget(self.toolbar)
         mainwdt = QWidget()
         self.main_box = QHBoxLayout()
         mainwdt.setLayout(self.main_box)
@@ -443,11 +481,11 @@ class vkmus(QWidget):
         self.web.show()
         self.store = self.web.page().profile().cookieStore()
         self.store.cookieAdded.connect(self.new_cookie)
-        self.setLayout(main_box)
+        self.setLayout(self.corelyt)
         self.log_label = QLabel("Авторизуйтесь в мобильной версии ВК для начала")
-        main_box.addWidget(self.log_label)
-        main_box.addWidget(self.web)
-        main_box.addWidget(mainwdt)
+        self.corelyt.addWidget(self.log_label)
+        self.corelyt.addWidget(self.web)
+        self.corelyt.addWidget(mainwdt)
         self.setGeometry(600, 600, 800, 600)
         if self.settings.value("geometry"):
             self.restoreGeometry(self.settings.value("geometry"))
