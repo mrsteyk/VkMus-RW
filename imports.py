@@ -1,3 +1,4 @@
+import datetime
 import os
 import random
 import re
@@ -5,7 +6,6 @@ import sys
 import threading
 import time
 import traceback
-import datetime
 
 import requests
 from hurry.filesize import size
@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (QAction, QApplication, QCheckBox, QDialog,
                              QProgressDialog, QPushButton, QSizePolicy,
                              QSlider, QSplashScreen, QStyleFactory,
                              QSystemTrayIcon, QTabWidget, QToolButton,
-                             QVBoxLayout, QWidget)
+                             QVBoxLayout, QWidget, QWidgetAction)
 
 import audio
 import player

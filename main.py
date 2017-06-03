@@ -188,15 +188,55 @@ class vkmus(QWidget):
         self.playerwdt = player.Ui_Player()
         self.playerwdt.setupUi(self.pwidget)
         # Сигналы
-        self.playerwdt.volume.valueChanged.connect(self.vol_ctl)
-        self.playerwdt.volumeicon.clicked.connect(lambda: self.player.setMuted(not self.player.isMuted()))
-        self.player.mutedChanged.connect(lambda muted:self.playerwdt.volumeicon.setIcon(self.style().standardIcon(self.style().SP_MediaVolumeMuted) if muted else self.style().standardIcon(self.style().SP_MediaVolume)))
+        #self.playerwdt.volume.valueChanged.connect(self.vol_ctl)
+        #self.playerwdt.volumeicon.clicked.connect(lambda: self.player.setMuted(not self.player.isMuted()))
+        self.player.mutedChanged.connect(lambda muted:self.playerwdt.volumebtn.setIcon(self.style().standardIcon(self.style().SP_MediaVolumeMuted) if muted else self.style().standardIcon(self.style().SP_MediaVolume)))
         self.playerwdt.playbtn.clicked.connect(self.pbutton_hnd)
         self.playerwdt.prevbtn.clicked.connect(self.previous_track)
         self.playerwdt.nextbtn.clicked.connect(self.next_track)
         self.playerwdt.shuffle.released.connect(self.button_shuffle)
         self.main_box.addWidget(self.pwidget)
         self.playerwdt.goto_tracks.clicked.connect(self.smode_trackop)
+        self.volumechanger = QWidgetAction(self.playerwdt.volumebtn)
+        self.volumechanger.wdt = QWidget()
+        self.volumechanger.setDefaultWidget(self.volumechanger.wdt)
+        self.volumechanger.lyt = QHBoxLayout()
+        self.volumechanger.wdt.setLayout(self.volumechanger.lyt)
+        self.volumechanger.volume_text = QLabel(self.volumechanger.wdt)
+        self.volumechanger.volume_text.setText("100")
+        self.volumechanger.volume_slider = QSlider(Qt.Horizontal)
+        self.volumechanger.volume_slider.setMaximum(100)
+        self.volumechanger.volume_slider.setValue(100)
+        self.volumechanger.volume_slider.valueChanged.connect(self.player.setVolume)
+        self.volumechanger.lyt.addWidget(self.volumechanger.volume_text)
+        self.volumechanger.lyt.addWidget(self.volumechanger.volume_slider)
+        menu = QMenu()
+        menu.addAction(self.volumechanger)
+        self.mute_bt = menu.addAction('Выключить звук')
+        self.mute_bt.triggered.connect(lambda:self.player.setMuted(not self.player.isMuted()))
+        self.player.volumeChanged.connect(self.volume_changed)
+        self.player.mutedChanged.connect(self.muted_changed)
+        self.playerwdt.volumebtn.setPopupMode(self.playerwdt.volumebtn.InstantPopup)
+        self.playerwdt.volumebtn.setMenu(menu)
+
+    def muted_changed(self, muted):
+        if muted:
+            self.playerwdt.volumebtn.setIcon(QIcon.fromTheme("audio-volume-muted"))
+            self.mute_bt.setText("Включить звук")
+        else:
+            self.volume_changed(self.player.volume())
+            self.mute_bt.setText("Выключить звук")
+
+    def volume_changed(self, volume):
+        if self.player.isMuted() or volume == 0:
+            self.playerwdt.volumebtn.setIcon(QIcon.fromTheme("audio-volume-muted"))
+        elif volume > 75:
+            self.playerwdt.volumebtn.setIcon(QIcon.fromTheme("audio-volume-high"))
+        elif volume > 35:
+            self.playerwdt.volumebtn.setIcon(QIcon.fromTheme("audio-volume-medium"))
+        else:
+            self.playerwdt.volumebtn.setIcon(QIcon.fromTheme("audio-volume-low"))
+        self.volumechanger.volume_text.setText(str(volume))
 
     def smode_trackop(self):
         self.pwidget.setVisible(not self.pwidget.isVisible())
