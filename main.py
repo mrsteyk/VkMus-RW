@@ -63,9 +63,6 @@ class vkmus(QWidget):
         self.initUI()
         self.btnstate = 0
         self.cookie = None
-        shortcut_play.activated.connect(self.pbutton_hnd)
-        shortcut_next.activated.connect(self.next_track)
-        shortcut_prev.activated.connect(self.previous_track)
 
 
     def pbutton_hnd(self):
@@ -118,13 +115,7 @@ class vkmus(QWidget):
         erase_vk.clicked.connect(self.erase_vk)
         self.settingsdial.lyt.addWidget(erase_vk)
         if self.settingsdial.exec_() != 0:
-            print("Setting new hotkeys")
-            self.settings.setValue("h_play", QKeySequence(self.settingsdial.keyseq_play.keySequence()[0]))
-            shortcut_play.setShortcut(settings.value("h_play", QKeySequence(Qt.Key_MediaPlay)))    
-            self.settings.setValue("h_next", QKeySequence(self.settingsdial.keyseq_next.keySequence()[0]))
-            shortcut_next.setShortcut(settings.value("h_next", QKeySequence(Qt.Key_MediaPlay)))    
-            self.settings.setValue("h_prev", QKeySequence(self.settingsdial.keyseq_prev.keySequence()[0]))
-            shortcut_prev.setShortcut(settings.value("h_prev", QKeySequence(Qt.Key_MediaPlay)))    
+            print("Slowing your pc down")
 
     def set_track(self):
         self.settings.setValue("last_track", self.tracknum)
@@ -567,14 +558,8 @@ if __name__ == '__main__':
     app.setApplicationVersion(__version__)
     app.setApplicationName("VKMus")
     sys.excepthook = excepthook
-    print("Setting hotkeys")
+    print("Slowing PC Down with this useless print")
     settings = QSettings("OctoNezd", "VKMus")    
-    shortcut_play = QxtGlobalShortcut()
-    shortcut_play.setShortcut(settings.value("h_play", QKeySequence(Qt.Key_MediaPlay)))
-    shortcut_next = QxtGlobalShortcut()
-    shortcut_next.setShortcut(settings.value("h_next", QKeySequence(Qt.Key_MediaPlay)))
-    shortcut_prev = QxtGlobalShortcut()
-    shortcut_prev.setShortcut(settings.value("h_prev", QKeySequence(Qt.Key_MediaPlay)))
     ex = vkmus()
     res = app.exec_()
     sys.exit(res)

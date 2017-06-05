@@ -9,7 +9,6 @@ import traceback
 
 import requests
 from hurry.filesize import size
-from pygs import QxtGlobalShortcut
 from PyQt5.QtCore import QSettings, QSize, Qt, QUrl
 from PyQt5.QtGui import (QIcon, QImage, QKeySequence, QPixmap,
                          QStandardItemModel)
